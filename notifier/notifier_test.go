@@ -173,7 +173,7 @@ func waitTestEnd() {
 func configureNotifier(t *testing.T) {
 	notifierMetrics := metrics.ConfigureNotifierMetrics("notifier")
 	var location, _ = time.LoadLocation("UTC")
-	dateTimeFormat := "15:04 02.01.2006"
+	dateTimeFormat := "15:04 02.01.2006(MST)"
 	config := Config{
 		SendingTimeout:   time.Millisecond * 10,
 		ResendingTimeout: time.Hour * 24,
@@ -194,7 +194,7 @@ func configureNotifier(t *testing.T) {
 		"type": "test",
 	}
 
-	sender.EXPECT().Init(senderSettings, logger, location, "15:04 02.01.2006").Return(nil)
+	sender.EXPECT().Init(senderSettings, logger, location, "15:04 02.01.2006(MST)").Return(nil)
 
 	notif.RegisterSender(senderSettings, sender)
 

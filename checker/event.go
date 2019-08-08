@@ -12,7 +12,7 @@ var badStateReminder = map[moira.State]int64{
 }
 
 const (
-	format        = "15:04 02.01.2006"
+	format        = "15:04 02.01.2006(MST)"
 	remindMessage = "This metric has been in bad state for more than %v hours - please, fix."
 )
 
