@@ -22,18 +22,71 @@ const (
 	VariableTriggerName = "${trigger_name}"
 )
 
+const (
+	format        = "15:04 02.01.2006"
+	remindMessage = "This metric has been in bad state for more than %v hours - please, fix."
+)
+
 // NotificationEvent represents trigger state changes event
 type NotificationEvent struct {
-	IsTriggerEvent bool     `json:"trigger_event,omitempty"`
-	Timestamp      int64    `json:"timestamp"`
-	Metric         string   `json:"metric"`
-	Value          *float64 `json:"value,omitempty"`
-	State          State    `json:"state"`
-	TriggerID      string   `json:"trigger_id"`
-	SubscriptionID *string  `json:"sub_id,omitempty"`
-	ContactID      string   `json:"contactId,omitempty"`
-	OldState       State    `json:"old_state"`
-	Message        *string  `json:"msg,omitempty"`
+	IsTriggerEvent bool        `json:"trigger_event,omitempty"`
+	Timestamp      int64       `json:"timestamp"`
+	Metric         string      `json:"metric"`
+	Value          *float64    `json:"value,omitempty"`
+	State          State       `json:"state"`
+	TriggerID      string      `json:"trigger_id"`
+	SubscriptionID *string     `json:"sub_id,omitempty"`
+	ContactID      string      `json:"contactId,omitempty"`
+	OldState       State       `json:"old_state"`
+	Message        *string     `json:"msg,omitempty"`
+	Maintenance    Maintenance `json:"maintenance"`
+}
+
+type Maintenance struct {
+	Info     *MaintenanceInfo `json:"info,omitempty"`
+	Interval *int64           `json:"interval,omitempty"`
+}
+
+func (event *NotificationEvent) GetMaintenanceInfoMessage(loc *time.Location) string {
+	if len(UseString(event.Message)) > 0 {
+		return *event.Message
+	}
+
+	if event.Maintenance.Interval != nil {
+		return fmt.Sprintf(remindMessage, event.Maintenance.Interval)
+	}
+
+	if event.Maintenance.Info == nil {
+		return ""
+	}
+
+	messageBuffer := bytes.NewBuffer([]byte(""))
+	messageBuffer.WriteString("This metric changed its state during maintenance interval.")
+
+	if event.Maintenance.Info.StartUser != nil || event.Maintenance.Info.StartTime != nil {
+		messageBuffer.WriteString(" Maintenance was set")
+		if event.Maintenance.Info.StartUser != nil {
+			messageBuffer.WriteString(" by ")
+			messageBuffer.WriteString(*event.Maintenance.Info.StartUser)
+		}
+		if event.Maintenance.Info.StartTime != nil {
+			messageBuffer.WriteString(" at ")
+			messageBuffer.WriteString(time.Unix(*event.Maintenance.Info.StartTime, 0).In(loc).Format(format))
+		}
+		if event.Maintenance.Info.StopUser != nil || event.Maintenance.Info.StopTime != nil {
+			messageBuffer.WriteString(" and removed")
+			if event.Maintenance.Info.StopUser != nil && *event.Maintenance.Info.StopUser != *event.Maintenance.Info.StartUser {
+				messageBuffer.WriteString(" by ")
+				messageBuffer.WriteString(*event.Maintenance.Info.StopUser)
+			}
+			if event.Maintenance.Info.StopTime != nil {
+				messageBuffer.WriteString(" at ")
+				messageBuffer.WriteString(time.Unix(*event.Maintenance.Info.StopTime, 0).In(loc).Format(format))
+			}
+		}
+		messageBuffer.WriteString(".")
+	}
+	return messageBuffer.String()
 }
 
 // NotificationEvents represents slice of NotificationEvent
@@ -315,7 +368,7 @@ func (schedule *ScheduleData) IsScheduleAllows(ts int64) bool {
 }
 
 func (event NotificationEvent) String() string {
-	return fmt.Sprintf("TriggerId: %s, Metric: %s, Value: %v, OldState: %s, State: %s, Message: '%s', Timestamp: %v", event.TriggerID, event.Metric, UseFloat64(event.Value), event.OldState, event.State, UseString(event.Message), event.Timestamp)
+	return fmt.Sprintf("TriggerId: %s, Metric: %s, Value: %v, OldState: %s, State: %s, Message: '%s', Timestamp: %v", event.TriggerID, event.Metric, UseFloat64(event.Value), event.OldState, event.State, event.GetMaintenanceInfoMessage(nil), event.Timestamp)
 }
 
 // GetMetricValue gets event metric value and format it to human readable presentation

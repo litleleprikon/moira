@@ -10,7 +10,7 @@ import (
 	slackdown "github.com/karriereat/blackfriday-slack"
 	"github.com/moira-alert/moira"
 	"github.com/moira-alert/moira/senders"
-	blackfriday "gopkg.in/russross/blackfriday.v2"
+	"gopkg.in/russross/blackfriday.v2"
 
 	"github.com/nlopes/slack"
 )
@@ -147,8 +147,8 @@ func (sender *Sender) buildEventsString(events moira.NotificationEvents, charsFo
 	eventsPrinted := 0
 	for _, event := range events {
 		line := fmt.Sprintf("\n%s: %s = %s (%s to %s)", event.FormatTimestamp(sender.location), event.Metric, event.GetMetricValue(), event.OldState, event.State)
-		if len(moira.UseString(event.Message)) > 0 {
-			line += fmt.Sprintf(". %s", moira.UseString(event.Message))
+		if msg := event.GetMaintenanceInfoMessage(sender.location); len(msg) > 0 {
+			line += fmt.Sprintf(". %s", msg)
 		}
 
 		tailString = fmt.Sprintf("\n...and %d more events.", len(events)-eventsPrinted)
