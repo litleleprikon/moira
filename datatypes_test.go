@@ -175,7 +175,7 @@ func TestNotificationEvent_CreateMessage(t *testing.T) {
 			event := NotificationEvent{EventMessage: EventInfo{
 				Info: &MaintenanceInfo{StartUser: &startUser, StopUser: &stopUser, StopTime: &stopTime},
 			}}
-			So(event.CreateMessage(nil), ShouldEqual, expected)
+			So(event.CreateMessage(time.Local), ShouldEqual, expected)
 		})
 	})
 }
