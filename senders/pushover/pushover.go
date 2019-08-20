@@ -78,7 +78,7 @@ func (sender *Sender) buildMessage(events moira.NotificationEvents, throttled bo
 			break
 		}
 		message.WriteString(fmt.Sprintf("%s: %s = %s (%s to %s)", event.FormatTimestamp(sender.location), event.Metric, event.GetMetricValue(), event.OldState, event.State))
-		if msg := event.GetMaintenanceInfoMessage(sender.location); len(msg) > 0 {
+		if msg := event.CreateMessage(sender.location); len(msg) > 0 {
 			message.WriteString(fmt.Sprintf(". %s\n", msg))
 		} else {
 			message.WriteString("\n")

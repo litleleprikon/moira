@@ -132,14 +132,60 @@ func TestIsScheduleAllows(t *testing.T) {
 	})
 }
 
+func TestNotificationEvent_CreateMessage(t *testing.T) {
+
+	Convey("Test creating message", t, func() {
+		var (
+			startTime int64 = 100
+			startUser       = "StartUser"
+			stopUser        = "StopUser"
+			stopTime  int64 = 200
+		)
+		Convey("Test: existence message", func() {
+			message := "Test message"
+			event := NotificationEvent{Message: &message}
+			So(event.CreateMessage(nil), ShouldEqual, message)
+		})
+		Convey("Test: creating remind message", func() {
+			message := "This metric has been in bad state for more than 24 hours - please, fix."
+			var interval int64 = 24
+			event := NotificationEvent{EventMessage: EventInfo{Interval: &interval}}
+			So(event.CreateMessage(nil), ShouldEqual, message)
+		})
+		Convey("Test: check for void MaintenanceInfo", func() {
+			event := NotificationEvent{EventMessage: EventInfo{}}
+			So(event.CreateMessage(nil), ShouldEqual, "")
+		})
+		Convey("Test: check for void location", func() {
+			expected := "This metric changed its state during maintenance interval. Maintenance was set at 05:01 01.01.1970(+05)."
+			event := NotificationEvent{EventMessage: EventInfo{
+				Info: &MaintenanceInfo{StartTime: &startTime},
+			}}
+			So(event.CreateMessage(nil), ShouldEqual, expected)
+		})
+		Convey("Test: was set by start user", func() {
+			expected := "This metric changed its state during maintenance interval. Maintenance was set by StartUser."
+			event := NotificationEvent{EventMessage: EventInfo{
+				Info: &MaintenanceInfo{StartUser: &startUser},
+			}}
+			So(event.CreateMessage(nil), ShouldEqual, expected)
+		})
+		Convey("Test: removed by stop user and time", func() {
+			expected := "This metric changed its state during maintenance interval. Maintenance was set by StartUser and removed by StopUser at 05:03 01.01.1970(+05)."
+			event := NotificationEvent{EventMessage: EventInfo{
+				Info: &MaintenanceInfo{StartUser: &startUser, StopUser: &stopUser, StopTime: &stopTime},
+			}}
+			So(event.CreateMessage(nil), ShouldEqual, expected)
+		})
+	})
+}
 func TestNotificationEvent_GetSubjectState(t *testing.T) {
 	Convey("Get ERROR state", t, func() {
-		message := "mes1"
 		var value float64 = 1
-		states := NotificationEvents{{State: StateOK}, {State: StateERROR, Message: &message, Value: &value}}
+		states := NotificationEvents{{State: StateOK}, {State: StateERROR, Value: &value}}
 		So(states.GetSubjectState(), ShouldResemble, StateERROR)
 		So(states[0].String(), ShouldResemble, "TriggerId: , Metric: , Value: 0, OldState: , State: OK, Message: '', Timestamp: 0")
-		So(states[1].String(), ShouldResemble, "TriggerId: , Metric: , Value: 1, OldState: , State: ERROR, Message: 'mes1', Timestamp: 0")
+		So(states[1].String(), ShouldResemble, "TriggerId: , Metric: , Value: 1, OldState: , State: ERROR, Message: '', Timestamp: 0")
 	})
 }
 
@@ -491,7 +537,6 @@ func TestBuildTriggerURL(t *testing.T) {
 	})
 }
 
-
 func TestSetMaintenanceUserAndTime(t *testing.T) {
 	startMaintenanceUser := "testStartMtUser"
 	startMaintenanceUserOld := "testStartMtUserOld"
@@ -505,20 +550,20 @@ func TestSetMaintenanceUserAndTime(t *testing.T) {
 			MaintenanceInfo{},
 			"anonymous",
 			MaintenanceInfo{},
-			)
+		)
 
 		testStopMaintenance(
 			"Not MaintenanceInfo, user anonymous.",
 			MaintenanceInfo{},
 			"anonymous",
 			MaintenanceInfo{},
-			)
+		)
 
 		testStartMaintenance(
 			"Not MaintenanceInfo, user real.",
 			MaintenanceInfo{},
 			startMaintenanceUser,
-			MaintenanceInfo{&startMaintenanceUser, &callTime,nil,nil},
+			MaintenanceInfo{&startMaintenanceUser, &callTime, nil, nil},
 		)
 
 		testStopMaintenance(
@@ -544,89 +589,89 @@ func TestSetMaintenanceUserAndTime(t *testing.T) {
 
 		testStartMaintenance(
 			"Set Start in MaintenanceInfo, user real.",
-			MaintenanceInfo{&startMaintenanceUserOld, &callTime, nil,nil },
+			MaintenanceInfo{&startMaintenanceUserOld, &callTime, nil, nil},
 			startMaintenanceUser,
-			MaintenanceInfo{&startMaintenanceUser, &callTime,nil,nil },
+			MaintenanceInfo{&startMaintenanceUser, &callTime, nil, nil},
 		)
 
 		testStopMaintenance(
 			"Set Start in MaintenanceInfo, user real.",
-			MaintenanceInfo{&startMaintenanceUserOld, &callTime, nil,nil },
+			MaintenanceInfo{&startMaintenanceUserOld, &callTime, nil, nil},
 			stopMaintenanceUser,
-			MaintenanceInfo{&startMaintenanceUserOld, &callTime,&stopMaintenanceUser,&callTime },
+			MaintenanceInfo{&startMaintenanceUserOld, &callTime, &stopMaintenanceUser, &callTime},
 		)
 
 		testStartMaintenance(
 			"Set Stop in MaintenanceInfo, user anonymous.",
-			MaintenanceInfo{nil, nil, &stopMaintenanceUserOld,&callTime },
+			MaintenanceInfo{nil, nil, &stopMaintenanceUserOld, &callTime},
 			"anonymous",
 			MaintenanceInfo{},
 		)
 
 		testStopMaintenance(
 			"Set Stop in MaintenanceInfo, user anonymous.",
-			MaintenanceInfo{nil, nil, &stopMaintenanceUserOld,&callTime },
+			MaintenanceInfo{nil, nil, &stopMaintenanceUserOld, &callTime},
 			"anonymous",
 			MaintenanceInfo{},
 		)
 
 		testStartMaintenance(
 			"Set Stop in MaintenanceInfo, user real.",
-			MaintenanceInfo{nil, nil, &stopMaintenanceUserOld,&callTime },
+			MaintenanceInfo{nil, nil, &stopMaintenanceUserOld, &callTime},
 			startMaintenanceUser,
-			MaintenanceInfo{&startMaintenanceUser, &callTime,nil,nil },
+			MaintenanceInfo{&startMaintenanceUser, &callTime, nil, nil},
 		)
 
 		testStopMaintenance(
 			"Set Stop in MaintenanceInfo, user real.",
-			MaintenanceInfo{nil, nil, &stopMaintenanceUserOld,&callTime },
+			MaintenanceInfo{nil, nil, &stopMaintenanceUserOld, &callTime},
 			stopMaintenanceUser,
-			MaintenanceInfo{nil, nil,&stopMaintenanceUser,&callTime },
+			MaintenanceInfo{nil, nil, &stopMaintenanceUser, &callTime},
 		)
 
 		testStartMaintenance(
 			"Set Start and Stop in MaintenanceInfo, user anonymous.",
-			MaintenanceInfo{&startMaintenanceUserOld, &callTime, &stopMaintenanceUserOld,&callTime },
+			MaintenanceInfo{&startMaintenanceUserOld, &callTime, &stopMaintenanceUserOld, &callTime},
 			"anonymous",
 			MaintenanceInfo{},
 		)
 
 		testStopMaintenance(
 			"Set Start and Stop in MaintenanceInfo, user anonymous.",
-			MaintenanceInfo{&startMaintenanceUserOld, &callTime, &stopMaintenanceUserOld,&callTime},
+			MaintenanceInfo{&startMaintenanceUserOld, &callTime, &stopMaintenanceUserOld, &callTime},
 			"anonymous",
-			MaintenanceInfo{&startMaintenanceUserOld, &callTime, nil,nil},
+			MaintenanceInfo{&startMaintenanceUserOld, &callTime, nil, nil},
 		)
 
 		testStartMaintenance(
 			"Set Start and Stop in MaintenanceInfo, user real.",
-			MaintenanceInfo{&startMaintenanceUserOld, &callTime, &stopMaintenanceUserOld,&callTime},
+			MaintenanceInfo{&startMaintenanceUserOld, &callTime, &stopMaintenanceUserOld, &callTime},
 			startMaintenanceUser,
-			MaintenanceInfo{&startMaintenanceUser, &callTime,nil,nil },
+			MaintenanceInfo{&startMaintenanceUser, &callTime, nil, nil},
 		)
 
 		testStopMaintenance(
 			"Set Start and Stop in MaintenanceInfo, user real.",
-			MaintenanceInfo{&startMaintenanceUserOld, &callTime, &stopMaintenanceUserOld,&callTime },
+			MaintenanceInfo{&startMaintenanceUserOld, &callTime, &stopMaintenanceUserOld, &callTime},
 			stopMaintenanceUser,
-			MaintenanceInfo{&startMaintenanceUserOld, &callTime,&stopMaintenanceUser,&callTime },
+			MaintenanceInfo{&startMaintenanceUserOld, &callTime, &stopMaintenanceUser, &callTime},
 		)
 	})
 }
 
-func testStartMaintenance(message string, actualInfo MaintenanceInfo, user string, expectedInfo MaintenanceInfo)  {
+func testStartMaintenance(message string, actualInfo MaintenanceInfo, user string, expectedInfo MaintenanceInfo) {
 	conveyMessage := fmt.Sprintf("%v Start maintenance.", message)
 	testMaintenance(conveyMessage, actualInfo, 3100, user, expectedInfo)
 }
 
-func testStopMaintenance(message string, actualInfo MaintenanceInfo, user string, expectedInfo MaintenanceInfo)  {
+func testStopMaintenance(message string, actualInfo MaintenanceInfo, user string, expectedInfo MaintenanceInfo) {
 	conveyMessage := fmt.Sprintf("%v Stop maintenance.", message)
 	testMaintenance(conveyMessage, actualInfo, 0, user, expectedInfo)
 }
 
 func testMaintenance(conveyMessage string, actualInfo MaintenanceInfo, maintenance int64, user string, expectedInfo MaintenanceInfo) {
 
-	Convey(conveyMessage, func(){
+	Convey(conveyMessage, func() {
 		var lastCheckTest = CheckData{
 			Maintenance: 1000,
 		}

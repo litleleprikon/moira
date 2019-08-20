@@ -61,7 +61,7 @@ func (triggerChecker *TriggerChecker) compareTriggerStates(currentCheck moira.Ch
 		OldState:       getEventOldState(lastCheck.State, lastCheck.SuppressedState, lastCheck.Suppressed),
 		Timestamp:      currentCheckTimestamp,
 		Metric:         triggerChecker.trigger.Name,
-		Maintenance: moira.Maintenance{
+		EventMessage: moira.EventInfo{
 			Info:     &maintenanceInfo,
 			Interval: interval,
 		},
@@ -114,7 +114,7 @@ func (triggerChecker *TriggerChecker) compareMetricStates(metric string, current
 		OldState:  getEventOldState(lastState.State, lastState.SuppressedState, lastState.Suppressed),
 		Timestamp: currentState.Timestamp,
 		Metric:    metric,
-		Maintenance: moira.Maintenance{
+		EventMessage: moira.EventInfo{
 			Info:     &maintenanceInfo,
 			Interval: interval,
 		},

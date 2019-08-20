@@ -42,7 +42,7 @@ func (sender *Sender) buildEvent(events moira.NotificationEvents, contact moira.
 
 	for _, event := range events {
 		line := fmt.Sprintf("\n%s: %s = %s (%s to %s)", event.FormatTimestamp(sender.location), event.Metric, event.GetMetricValue(), event.OldState, event.State)
-		if msg := event.GetMaintenanceInfoMessage(sender.location); len(msg) > 0 {
+		if msg := event.CreateMessage(sender.location); len(msg) > 0 {
 			line += fmt.Sprintf(". %s", msg)
 		}
 		eventList += line
