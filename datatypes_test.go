@@ -157,7 +157,7 @@ func TestNotificationEvent_CreateMessage(t *testing.T) {
 			So(event.CreateMessage(nil), ShouldEqual, "")
 		})
 		Convey("Test: check for void location", func() {
-			expected := "This metric changed its state during maintenance interval. Maintenance was set at 05:01 01.01.1970(+05)."
+			expected := "This metric changed its state during maintenance interval. Maintenance was set at 00:01 01.01.1970(UTC)."
 			event := NotificationEvent{EventMessage: EventInfo{
 				Info: &MaintenanceInfo{StartTime: &startTime},
 			}}
@@ -171,11 +171,11 @@ func TestNotificationEvent_CreateMessage(t *testing.T) {
 			So(event.CreateMessage(nil), ShouldEqual, expected)
 		})
 		Convey("Test: removed by stop user and time", func() {
-			expected := "This metric changed its state during maintenance interval. Maintenance was set by StartUser and removed by StopUser at 05:03 01.01.1970(+05)."
+			expected := "This metric changed its state during maintenance interval. Maintenance was set by StartUser and removed by StopUser at 00:03 01.01.1970."
 			event := NotificationEvent{EventMessage: EventInfo{
 				Info: &MaintenanceInfo{StartUser: &startUser, StopUser: &stopUser, StopTime: &stopTime},
 			}}
-			So(event.CreateMessage(time.Local), ShouldEqual, expected)
+			So(event.CreateMessage(time.UTC), ShouldEqual, expected)
 		})
 	})
 }

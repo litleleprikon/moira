@@ -62,7 +62,7 @@ func (event *NotificationEvent) CreateMessage(loc *time.Location) string {
 
 	tz := ""
 	if loc == nil {
-		loc = time.Local
+		loc = time.UTC
 		tz = "(MST)"
 	}
 
