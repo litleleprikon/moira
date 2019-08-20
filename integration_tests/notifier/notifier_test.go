@@ -24,7 +24,7 @@ var senderSettings = map[string]string{
 }
 
 var location, _ = time.LoadLocation("UTC")
-var dateTimeFormat = "15:04 02.01.2006(MST)"
+var dateTimeFormat = "15:04 02.01.2006"
 
 var notifierConfig = notifier.Config{
 	SendingTimeout:   time.Millisecond * 10,

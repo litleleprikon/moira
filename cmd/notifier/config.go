@@ -107,7 +107,7 @@ func (config *notifierConfig) getSettings(logger moira.Logger) notifier.Config {
 		logger.Infof("Timezone '%s' loaded.", config.Timezone)
 	}
 
-	format := "15:04 02.01.2006(MST)"
+	format := "15:04 02.01.2006"
 	if err := checkDateTimeFormat(config.DateTimeFormat); err != nil {
 		logger.Warningf("%v. Current time format: %v", err.Error(), time.Now().Format(format))
 	} else {

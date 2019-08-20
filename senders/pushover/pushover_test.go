@@ -79,16 +79,15 @@ func TestBuildMoiraMessage(t *testing.T) {
 	location, _ := time.LoadLocation("UTC")
 	sender := Sender{location: location}
 	value := float64(123)
-	message := "This is message"
 
 	Convey("Build Moira Message tests", t, func() {
+		var interval int64 = 24
 		event := moira.NotificationEvent{
 			Value:     &value,
 			Timestamp: 150000000,
 			Metric:    "Metric",
 			OldState:  moira.StateOK,
 			State:     moira.StateNODATA,
-			Message:   nil,
 		}
 
 		Convey("Print moira message with one event", func() {
@@ -98,9 +97,9 @@ func TestBuildMoiraMessage(t *testing.T) {
 		})
 
 		Convey("Print moira message with one event and message", func() {
-			event.Message = &message
+			event.EventMessage = moira.EventInfo{Interval: &interval}
 			actual := sender.buildMessage([]moira.NotificationEvent{event}, false)
-			expected := "02:40: Metric = 123 (OK to NODATA). This is message\n"
+			expected := "02:40: Metric = 123 (OK to NODATA). This metric has been in bad state for more than 24 hours - please, fix.\n"
 			So(actual, ShouldResemble, expected)
 		})
 
@@ -163,7 +162,6 @@ func TestMakePushoverMessage(t *testing.T) {
 			Metric:    "Metric",
 			OldState:  moira.StateOK,
 			State:     moira.StateERROR,
-			Message:   nil,
 		},
 		}
 		trigger := moira.TriggerData{
