@@ -48,7 +48,7 @@ type EventInfo struct {
 	Interval *int64           `json:"interval,omitempty"`
 }
 
-// CreateMessage: creates a message based EventInfo
+// CreateMessage - creates a message based EventInfo
 func (event *NotificationEvent) CreateMessage(loc *time.Location) string {
 	if len(UseString(event.Message)) > 0 {
 		return *event.Message
