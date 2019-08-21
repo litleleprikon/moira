@@ -42,13 +42,13 @@ type NotificationEvent struct {
 	EventMessage   EventInfo `json:"event_message"`
 }
 
-// EventInfo is used to create messages.
+// EventInfo - a base for creating messages.
 type EventInfo struct {
 	Info     *MaintenanceInfo `json:"info,omitempty"`
 	Interval *int64           `json:"interval,omitempty"`
 }
 
-// CreateMessage - creates a message based on EventInfo
+// CreateMessage - creates a message based on EventInfo.
 func (event *NotificationEvent) CreateMessage(loc *time.Location) string {
 	if len(UseString(event.Message)) > 0 {
 		return *event.Message
