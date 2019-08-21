@@ -50,6 +50,7 @@ type EventInfo struct {
 
 // CreateMessage - creates a message based on EventInfo.
 func (event *NotificationEvent) CreateMessage(loc *time.Location) string {
+	// ToDo: DEPRECATED Message in NotificationEvent
 	if len(UseString(event.Message)) > 0 {
 		return *event.Message
 	}
