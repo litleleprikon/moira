@@ -62,6 +62,7 @@ func (event *NotificationEvent) CreateMessage(loc *time.Location) string {
 		return ""
 	}
 
+	// If there is no time zone then use UTC and use the format with time zone
 	tz := ""
 	if loc == nil {
 		loc = time.UTC
