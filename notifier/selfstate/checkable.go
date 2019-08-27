@@ -7,7 +7,7 @@ const (
 )
 
 type Checkable interface {
-	Check(int64, []moira.NotificationEvent) string
+	Check(int64, *[]moira.NotificationEvent) string
 }
 
 type baseCheck struct {
@@ -18,7 +18,7 @@ type baseCheck struct {
 	last, count *int64
 }
 
-func (check baseCheck) Handle(tml, err string, interval int64, events []moira.NotificationEvent) {
+func (check baseCheck) Handle(tml, err string, interval int64, events *[]moira.NotificationEvent) {
 	check.log.Errorf(tml, err, interval)
 	appendNotificationEvents(events, err, interval)
 }
@@ -27,7 +27,7 @@ type RedisDisconnect struct {
 	baseCheck
 }
 
-func (check RedisDisconnect) Check(nowTS int64, events []moira.NotificationEvent) string {
+func (check RedisDisconnect) Check(nowTS int64, events *[]moira.NotificationEvent) string {
 	_, err := check.db.GetChecksUpdatesCount()
 	if err == nil {
 		*check.last = nowTS
@@ -43,7 +43,7 @@ type MetricReceivedDelay struct {
 	baseCheck
 }
 
-func (check MetricReceivedDelay) Check(nowTS int64, events []moira.NotificationEvent) string {
+func (check MetricReceivedDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
 	mc, err := check.db.GetMetricsUpdatesCount()
 	if err == nil {
 		if *check.count != mc {
@@ -63,7 +63,7 @@ type CheckDelay struct {
 	baseCheck
 }
 
-func (check CheckDelay) Check(nowTS int64, events []moira.NotificationEvent) string {
+func (check CheckDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
 	cc, err := check.db.GetChecksUpdatesCount()
 	if err == nil {
 		if *check.count != cc {
@@ -83,7 +83,7 @@ type RemoteTriggersDelay struct {
 	baseCheck
 }
 
-func (check RemoteTriggersDelay) Check(nowTS int64, events []moira.NotificationEvent) string {
+func (check RemoteTriggersDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
 	rcc, err := check.db.GetRemoteChecksUpdatesCount()
 	if err == nil {
 		if *check.count != rcc {

@@ -129,26 +129,26 @@ func (selfCheck *SelfCheckWorker) check(nowTS int64, lastMetricReceivedTS, redis
 
 	if *nextSendErrorMessage < nowTS {
 		for _, check := range selfCheck.Checkables {
-			if state := check.Check(nowTS, events); state != "" {
+			if state := check.Check(nowTS, &events); state != "" {
 				selfCheck.setNotifierState(state)
 			}
 		}
 
 		if notifierState, _ := selfCheck.DB.GetNotifierState(); notifierState != moira.SelfStateOK {
 			selfCheck.Logger.Errorf("%s. Send message.", notifierStateErrorMessage(notifierState))
-			appendNotificationEvents(events, notifierStateErrorMessage(notifierState), 0)
+			appendNotificationEvents(&events, notifierStateErrorMessage(notifierState), 0)
 		}
 
 		if len(events) > 0 {
 			eventsJSON, _ := json.Marshal(events)
 			selfCheck.Logger.Errorf("Health check. Send package of %v notification events: %s", len(events), eventsJSON)
-			selfCheck.sendErrorMessages(events)
+			selfCheck.sendErrorMessages(&events)
 			*nextSendErrorMessage = nowTS + selfCheck.Config.NoticeIntervalSeconds
 		}
 	}
 }
 
-func appendNotificationEvents(events []moira.NotificationEvent, message string, currentValue int64) {
+func appendNotificationEvents(events *[]moira.NotificationEvent, message string, currentValue int64) {
 	val := float64(currentValue)
 	event := moira.NotificationEvent{
 		Timestamp: time.Now().Unix(),
@@ -158,10 +158,10 @@ func appendNotificationEvents(events []moira.NotificationEvent, message string, 
 		Value:     &val,
 	}
 
-	events = append(events, event)
+	*events = append(*events, event)
 }
 
-func (selfCheck *SelfCheckWorker) sendErrorMessages(events []moira.NotificationEvent) {
+func (selfCheck *SelfCheckWorker) sendErrorMessages(events *[]moira.NotificationEvent) {
 	var sendingWG sync.WaitGroup
 	for _, adminContact := range selfCheck.Config.Contacts {
 		pkg := notifier.NotificationPackage{
@@ -173,7 +173,7 @@ func (selfCheck *SelfCheckWorker) sendErrorMessages(events []moira.NotificationE
 				Name:       "Moira health check",
 				ErrorValue: float64(0),
 			},
-			Events:     events,
+			Events:     *events,
 			DontResend: true,
 		}
 		selfCheck.Notifier.Send(&pkg, &sendingWG)

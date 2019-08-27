@@ -58,8 +58,8 @@ func TestDatabaseDisconnected(t *testing.T) {
 			lastRemoteCheckTS = now.Unix()
 			nextSendErrorMessage = now.Add(-time.Second * 5).Unix()
 			lastMetricReceivedTS = now.Unix()
-			appendNotificationEvents(events, redisDisconnectedErrorMessage, now.Unix()-redisLastCheckTS)
-			appendNotificationEvents(events, notifierStateErrorMessage(moira.SelfStateERROR), 0)
+			appendNotificationEvents(&events, redisDisconnectedErrorMessage, now.Unix()-redisLastCheckTS)
+			appendNotificationEvents(&events, notifierStateErrorMessage(moira.SelfStateERROR), 0)
 			expectedPackage := configureNotificationPackage(adminContact, &events)
 
 			mock.notif.EXPECT().Send(&expectedPackage, &sendingWG)
@@ -109,8 +109,8 @@ func TestMoiraCacheDoesNotReceivedNewMetrics(t *testing.T) {
 		metricsCount = 1
 
 		callingNow := now.Add(time.Second * 2)
-		appendNotificationEvents(events, filterStateErrorMessage, callingNow.Unix()-lastMetricReceivedTS)
-		appendNotificationEvents(events, notifierStateErrorMessage(moira.SelfStateERROR), 0)
+		appendNotificationEvents(&events, filterStateErrorMessage, callingNow.Unix()-lastMetricReceivedTS)
+		appendNotificationEvents(&events, notifierStateErrorMessage(moira.SelfStateERROR), 0)
 		expectedPackage := configureNotificationPackage(adminContact, &events)
 
 		mock.database.EXPECT().SetNotifierState(moira.SelfStateERROR).Return(nil)
@@ -161,8 +161,8 @@ func TestMoiraCheckerDoesNotChecksTriggers(t *testing.T) {
 		checksCount = 1
 
 		callingNow := now.Add(time.Second * 2)
-		appendNotificationEvents(events, checkerStateErrorMessage, callingNow.Unix()-lastCheckTS)
-		appendNotificationEvents(events, notifierStateErrorMessage(moira.SelfStateERROR), 0)
+		appendNotificationEvents(&events, checkerStateErrorMessage, callingNow.Unix()-lastCheckTS)
+		appendNotificationEvents(&events, notifierStateErrorMessage(moira.SelfStateERROR), 0)
 		expectedPackage := configureNotificationPackage(adminContact, &events)
 
 		mock.database.EXPECT().SetNotifierState(moira.SelfStateERROR).Return(nil)
@@ -215,7 +215,7 @@ func TestMoiraCheckerDoesNotChecksRemoteTriggers(t *testing.T) {
 		remoteChecksCount = 1
 
 		callingNow := now.Add(time.Second * 2)
-		appendNotificationEvents(events, remoteCheckerStateErrorMessage, callingNow.Unix()-lastRemoteCheckTS)
+		appendNotificationEvents(&events, remoteCheckerStateErrorMessage, callingNow.Unix()-lastRemoteCheckTS)
 		expectedPackage := configureNotificationPackage(adminContact, &events)
 
 		mock.database.EXPECT().GetNotifierState().Return(moira.SelfStateOK, nil)
