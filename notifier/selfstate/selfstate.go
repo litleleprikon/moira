@@ -48,30 +48,31 @@ func (selfCheck *SelfCheckWorker) selfStateChecker(stop <-chan struct{}) error {
 	checkTicker := time.NewTicker(defaultCheckInterval)
 	defer checkTicker.Stop()
 
-	// Сollect the Checkables
-	base := baseCheck{log: selfCheck.Logger, db: selfCheck.DB}
-	if selfCheck.Config.RedisDisconnectDelaySeconds > 0 {
-		check := &RedisDisconnect{base}
-		check.last, check.delay = &redisLastCheckTS, selfCheck.Config.RedisDisconnectDelaySeconds
-		selfCheck.Checkables = append(selfCheck.Checkables, check)
-	}
+	{ // Сollect the Checkables
+		base := baseCheck{log: selfCheck.Logger, db: selfCheck.DB}
+		if selfCheck.Config.RedisDisconnectDelaySeconds > 0 {
+			check := &RedisDisconnect{base}
+			check.last, check.delay = &redisLastCheckTS, selfCheck.Config.RedisDisconnectDelaySeconds
+			selfCheck.Checkables = append(selfCheck.Checkables, check)
+		}
 
-	if selfCheck.Config.LastMetricReceivedDelaySeconds > 0 {
-		check := &MetricReceivedDelay{base}
-		check.last, check.count, check.delay = &lastMetricReceivedTS, &metricsCount, selfCheck.Config.LastMetricReceivedDelaySeconds
-		selfCheck.Checkables = append(selfCheck.Checkables, check)
-	}
+		if selfCheck.Config.LastMetricReceivedDelaySeconds > 0 {
+			check := &MetricReceivedDelay{base}
+			check.last, check.count, check.delay = &lastMetricReceivedTS, &metricsCount, selfCheck.Config.LastMetricReceivedDelaySeconds
+			selfCheck.Checkables = append(selfCheck.Checkables, check)
+		}
 
-	if selfCheck.Config.LastCheckDelaySeconds > 0 {
-		check := &CheckDelay{base}
-		check.last, check.count, check.delay = &lastCheckTS, &checksCount, selfCheck.Config.LastCheckDelaySeconds
-		selfCheck.Checkables = append(selfCheck.Checkables, check)
-	}
+		if selfCheck.Config.LastCheckDelaySeconds > 0 {
+			check := &CheckDelay{base}
+			check.last, check.count, check.delay = &lastCheckTS, &checksCount, selfCheck.Config.LastCheckDelaySeconds
+			selfCheck.Checkables = append(selfCheck.Checkables, check)
+		}
 
-	if selfCheck.Config.LastRemoteCheckDelaySeconds > 0 {
-		check := &RemoteTriggersDelay{base}
-		check.last, check.count, check.delay = &lastRemoteCheckTS, &remoteChecksCount, selfCheck.Config.LastRemoteCheckDelaySeconds
-		selfCheck.Checkables = append(selfCheck.Checkables, check)
+		if selfCheck.Config.LastRemoteCheckDelaySeconds > 0 {
+			check := &RemoteTriggersDelay{base}
+			check.last, check.count, check.delay = &lastRemoteCheckTS, &remoteChecksCount, selfCheck.Config.LastRemoteCheckDelaySeconds
+			selfCheck.Checkables = append(selfCheck.Checkables, check)
+		}
 	}
 
 	for {
@@ -80,7 +81,7 @@ func (selfCheck *SelfCheckWorker) selfStateChecker(stop <-chan struct{}) error {
 			selfCheck.Logger.Info("Moira Notifier Self State Monitor stopped")
 			return nil
 		case <-checkTicker.C:
-			selfCheck.check(time.Now().Unix(), &lastMetricReceivedTS, &redisLastCheckTS, &lastCheckTS, &lastRemoteCheckTS, &nextSendErrorMessage, &metricsCount, &checksCount, &remoteChecksCount)
+			selfCheck.check(time.Now().Unix(), &nextSendErrorMessage)
 		}
 	}
 }
@@ -124,7 +125,7 @@ func (selfCheck *SelfCheckWorker) Stop() error {
 	return selfCheck.tomb.Wait()
 }
 
-func (selfCheck *SelfCheckWorker) check(nowTS int64, lastMetricReceivedTS, redisLastCheckTS, lastCheckTS, lastRemoteCheckTS, nextSendErrorMessage, metricsCount, checksCount, remoteChecksCount *int64) {
+func (selfCheck *SelfCheckWorker) check(nowTS int64, nextSendErrorMessage *int64) {
 	var events []moira.NotificationEvent
 
 	if *nextSendErrorMessage < nowTS {

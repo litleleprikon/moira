@@ -30,8 +30,8 @@ func TestDatabaseDisconnected(t *testing.T) {
 	}
 
 	var (
-		metricsCount         int64
-		checksCount          int64
+		//metricsCount         int64
+		//checksCount          int64
 		remoteChecksCount    int64
 		lastMetricReceivedTS int64
 		redisLastCheckTS     int64
@@ -40,7 +40,7 @@ func TestDatabaseDisconnected(t *testing.T) {
 		nextSendErrorMessage int64
 	)
 
-	// _, selfStateWorker, database, notif, conf, mockCtrl := configureWorker(t)
+	//_, selfStateWorker, database, notif, conf, mockCtrl := configureWorker(t)
 	mock := configureWorker(t, false)
 	mock.selfCheckWorker.Start()
 	Convey("Database disconnected", t, func() {
@@ -48,8 +48,7 @@ func TestDatabaseDisconnected(t *testing.T) {
 			var events []moira.NotificationEvent
 			var sendingWG sync.WaitGroup
 			err := fmt.Errorf("DataBase doesn't work")
-			mock.database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil)
-			mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), err)
+			mock.database.EXPECT().GetRemoteChecksUpdatesCount().Return(int64(1), err)
 			mock.database.EXPECT().GetNotifierState().Return(moira.SelfStateERROR, err)
 
 			now := time.Now()
@@ -61,9 +60,17 @@ func TestDatabaseDisconnected(t *testing.T) {
 			appendNotificationEvents(&events, redisDisconnectedErrorMessage, now.Unix()-redisLastCheckTS)
 			appendNotificationEvents(&events, notifierStateErrorMessage(moira.SelfStateERROR), 0)
 			expectedPackage := configureNotificationPackage(adminContact, &events)
-
+			{
+				mock.selfCheckWorker.Checkables = []Checkable{}
+				base := baseCheck{log: mock.selfCheckWorker.Logger, db: mock.selfCheckWorker.DB}
+				{
+					check := &RemoteTriggersDelay{base}
+					check.last, check.count, check.delay = &lastRemoteCheckTS, &remoteChecksCount, mock.selfCheckWorker.Config.LastRemoteCheckDelaySeconds
+					mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+				}
+			}
 			mock.notif.EXPECT().Send(&expectedPackage, &sendingWG)
-			mock.selfCheckWorker.check(now.Unix(), &lastMetricReceivedTS, &redisLastCheckTS, &lastCheckTS, &lastRemoteCheckTS, &nextSendErrorMessage, &metricsCount, &checksCount, &remoteChecksCount)
+			mock.selfCheckWorker.check(now.Unix(), &nextSendErrorMessage)
 
 			So(lastMetricReceivedTS, ShouldEqual, now.Unix())
 			So(lastCheckTS, ShouldEqual, now.Unix())
@@ -112,11 +119,34 @@ func TestMoiraCacheDoesNotReceivedNewMetrics(t *testing.T) {
 		appendNotificationEvents(&events, filterStateErrorMessage, callingNow.Unix()-lastMetricReceivedTS)
 		appendNotificationEvents(&events, notifierStateErrorMessage(moira.SelfStateERROR), 0)
 		expectedPackage := configureNotificationPackage(adminContact, &events)
-
+		{
+			mock.selfCheckWorker.Checkables = []Checkable{}
+			base := baseCheck{log: mock.selfCheckWorker.Logger, db: mock.selfCheckWorker.DB}
+			{
+				check := &RedisDisconnect{base}
+				check.last, check.delay = &redisLastCheckTS, mock.selfCheckWorker.Config.RedisDisconnectDelaySeconds
+				mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+			}
+			{
+				check := &MetricReceivedDelay{base}
+				check.last, check.count, check.delay = &lastMetricReceivedTS, &metricsCount, mock.selfCheckWorker.Config.LastMetricReceivedDelaySeconds
+				mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+			}
+			{
+				check := &CheckDelay{base}
+				check.last, check.count, check.delay = &lastCheckTS, &checksCount, mock.selfCheckWorker.Config.LastCheckDelaySeconds
+				mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+			}
+			{
+				check := &RemoteTriggersDelay{base}
+				check.last, check.count, check.delay = &lastRemoteCheckTS, &remoteChecksCount, mock.selfCheckWorker.Config.LastRemoteCheckDelaySeconds
+				mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+			}
+		}
 		mock.database.EXPECT().SetNotifierState(moira.SelfStateERROR).Return(nil)
 		mock.database.EXPECT().GetNotifierState().Return(moira.SelfStateERROR, nil)
 		mock.notif.EXPECT().Send(&expectedPackage, &sendingWG)
-		mock.selfCheckWorker.check(callingNow.Unix(), &lastMetricReceivedTS, &redisLastCheckTS, &lastCheckTS, &lastRemoteCheckTS, &nextSendErrorMessage, &metricsCount, &checksCount, &remoteChecksCount)
+		mock.selfCheckWorker.check(callingNow.Unix(), &nextSendErrorMessage)
 
 		So(lastMetricReceivedTS, ShouldEqual, now.Add(-time.Second*61).Unix())
 		So(lastCheckTS, ShouldEqual, callingNow.Unix())
@@ -164,11 +194,35 @@ func TestMoiraCheckerDoesNotChecksTriggers(t *testing.T) {
 		appendNotificationEvents(&events, checkerStateErrorMessage, callingNow.Unix()-lastCheckTS)
 		appendNotificationEvents(&events, notifierStateErrorMessage(moira.SelfStateERROR), 0)
 		expectedPackage := configureNotificationPackage(adminContact, &events)
+		{
+			mock.selfCheckWorker.Checkables = []Checkable{}
+			base := baseCheck{log: mock.selfCheckWorker.Logger, db: mock.selfCheckWorker.DB}
+			{
+				check := &RedisDisconnect{base}
+				check.last, check.delay = &redisLastCheckTS, mock.selfCheckWorker.Config.RedisDisconnectDelaySeconds
+				mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+			}
+			{
+				check := &MetricReceivedDelay{base}
+				check.last, check.count, check.delay = &lastMetricReceivedTS, &metricsCount, mock.selfCheckWorker.Config.LastMetricReceivedDelaySeconds
+				mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+			}
+			{
+				check := &CheckDelay{base}
+				check.last, check.count, check.delay = &lastCheckTS, &checksCount, mock.selfCheckWorker.Config.LastCheckDelaySeconds
+				mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+			}
+			{
+				check := &RemoteTriggersDelay{base}
+				check.last, check.count, check.delay = &lastRemoteCheckTS, &remoteChecksCount, mock.selfCheckWorker.Config.LastRemoteCheckDelaySeconds
+				mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+			}
+		}
 
 		mock.database.EXPECT().SetNotifierState(moira.SelfStateERROR).Return(nil)
 		mock.database.EXPECT().GetNotifierState().Return(moira.SelfStateERROR, nil)
 		mock.notif.EXPECT().Send(&expectedPackage, &sendingWG)
-		mock.selfCheckWorker.check(callingNow.Unix(), &lastMetricReceivedTS, &redisLastCheckTS, &lastCheckTS, &lastRemoteCheckTS, &nextSendErrorMessage, &metricsCount, &checksCount, &remoteChecksCount)
+		mock.selfCheckWorker.check(callingNow.Unix(), &nextSendErrorMessage)
 
 		So(lastMetricReceivedTS, ShouldEqual, callingNow.Unix())
 		So(lastCheckTS, ShouldEqual, now.Add(-time.Second*121).Unix())
@@ -213,6 +267,30 @@ func TestMoiraCheckerDoesNotChecksRemoteTriggers(t *testing.T) {
 		lastMetricReceivedTS = now.Unix()
 		checksCount = 1
 		remoteChecksCount = 1
+		{
+			mock.selfCheckWorker.Checkables = []Checkable{}
+			base := baseCheck{log: mock.selfCheckWorker.Logger, db: mock.selfCheckWorker.DB}
+			{
+				check := &RedisDisconnect{base}
+				check.last, check.delay = &redisLastCheckTS, mock.selfCheckWorker.Config.RedisDisconnectDelaySeconds
+				mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+			}
+			{
+				check := &MetricReceivedDelay{base}
+				check.last, check.count, check.delay = &lastMetricReceivedTS, &metricsCount, mock.selfCheckWorker.Config.LastMetricReceivedDelaySeconds
+				mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+			}
+			{
+				check := &CheckDelay{base}
+				check.last, check.count, check.delay = &lastCheckTS, &checksCount, mock.selfCheckWorker.Config.LastCheckDelaySeconds
+				mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+			}
+			{
+				check := &RemoteTriggersDelay{base}
+				check.last, check.count, check.delay = &lastRemoteCheckTS, &remoteChecksCount, mock.selfCheckWorker.Config.LastRemoteCheckDelaySeconds
+				mock.selfCheckWorker.Checkables = append(mock.selfCheckWorker.Checkables, check)
+			}
+		}
 
 		callingNow := now.Add(time.Second * 2)
 		appendNotificationEvents(&events, remoteCheckerStateErrorMessage, callingNow.Unix()-lastRemoteCheckTS)
@@ -220,7 +298,7 @@ func TestMoiraCheckerDoesNotChecksRemoteTriggers(t *testing.T) {
 
 		mock.database.EXPECT().GetNotifierState().Return(moira.SelfStateOK, nil)
 		mock.notif.EXPECT().Send(&expectedPackage, &sendingWG)
-		mock.selfCheckWorker.check(callingNow.Unix(), &lastMetricReceivedTS, &redisLastCheckTS, &lastCheckTS, &lastRemoteCheckTS, &nextSendErrorMessage, &metricsCount, &checksCount, &remoteChecksCount)
+		mock.selfCheckWorker.check(callingNow.Unix(), &nextSendErrorMessage)
 
 		So(lastMetricReceivedTS, ShouldEqual, callingNow.Unix())
 		So(lastRemoteCheckTS, ShouldEqual, now.Add(-time.Second*121).Unix())
