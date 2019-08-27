@@ -6,10 +6,12 @@ const (
 	templateMoreThan = "%s more than %ds. Send message."
 )
 
+// Checkable is the interface for simplified events verification.
 type Checkable interface {
 	Check(int64, *[]moira.NotificationEvent) string
 }
 
+// baseCheck basic structure for Checkable structures
 type baseCheck struct {
 	log moira.Logger
 	db  moira.Database
@@ -18,7 +20,8 @@ type baseCheck struct {
 	last, count *int64
 }
 
-func (check baseCheck) Handle(tml, err string, interval int64, events *[]moira.NotificationEvent) {
+// Handling: Handler for structures based on a basic structure
+func (check baseCheck) Handling(tml, err string, interval int64, events *[]moira.NotificationEvent) {
 	check.log.Errorf(tml, err, interval)
 	appendNotificationEvents(events, err, interval)
 }
@@ -34,7 +37,7 @@ func (check RedisDisconnect) Check(nowTS int64, events *[]moira.NotificationEven
 	}
 
 	if *check.last < nowTS-check.delay {
-		check.Handle(templateMoreThan, redisDisconnectedErrorMessage, nowTS-*check.last, events)
+		check.Handling(templateMoreThan, redisDisconnectedErrorMessage, nowTS-*check.last, events)
 	}
 	return ""
 }
@@ -53,7 +56,7 @@ func (check MetricReceivedDelay) Check(nowTS int64, events *[]moira.Notification
 	}
 
 	if *check.last < nowTS-check.delay && err == nil {
-		check.Handle(templateMoreThan, filterStateErrorMessage, nowTS-*check.last, events)
+		check.Handling(templateMoreThan, filterStateErrorMessage, nowTS-*check.last, events)
 		return moira.SelfStateERROR
 	}
 	return ""
@@ -73,7 +76,7 @@ func (check CheckDelay) Check(nowTS int64, events *[]moira.NotificationEvent) st
 	}
 
 	if *check.last < nowTS-check.delay && err == nil {
-		check.Handle(templateMoreThan, checkerStateErrorMessage, nowTS-*check.last, events)
+		check.Handling(templateMoreThan, checkerStateErrorMessage, nowTS-*check.last, events)
 		return moira.SelfStateERROR
 	}
 	return ""
@@ -93,7 +96,7 @@ func (check RemoteTriggersDelay) Check(nowTS int64, events *[]moira.Notification
 	}
 
 	if *check.last < nowTS-check.delay && err == nil {
-		check.Handle(templateMoreThan, remoteCheckerStateErrorMessage, nowTS-*check.last, events)
+		check.Handling(templateMoreThan, remoteCheckerStateErrorMessage, nowTS-*check.last, events)
 		return moira.SelfStateERROR
 	}
 	return ""
