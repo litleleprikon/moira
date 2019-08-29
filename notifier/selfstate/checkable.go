@@ -21,9 +21,9 @@ type baseDelay struct {
 }
 
 // Handling: Handler for structures based on a basic structure
-func (check baseDelay) Handling(tml, err string, interval int64, events *[]moira.NotificationEvent) {
-	check.log.Errorf(tml, err, interval)
-	appendNotificationEvents(events, err, interval)
+func (check baseDelay) Handling(tml, errMsg string, interval int64, events *[]moira.NotificationEvent) {
+	check.log.Errorf(tml, errMsg, interval)
+	appendNotificationEvents(events, errMsg, interval)
 }
 
 // RedisDelay structure to check redis disconnect delay
