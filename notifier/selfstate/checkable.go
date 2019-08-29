@@ -44,7 +44,7 @@ func (check RedisDelay) Check(nowTS int64, events *[]moira.NotificationEvent) st
 	return ""
 }
 
-// Check metric received delay
+// MetricDelay checked metric received delay
 type MetricDelay struct {
 	baseDelay
 }
@@ -67,7 +67,7 @@ func (check MetricDelay) Check(nowTS int64, events *[]moira.NotificationEvent) s
 	return ""
 }
 
-// Check last check delay
+// CheckDelay checked last check delay
 type CheckDelay struct {
 	baseDelay
 }
@@ -88,7 +88,7 @@ func (check CheckDelay) Check(nowTS int64, events *[]moira.NotificationEvent) st
 	return ""
 }
 
-// Check last remote check delay
+// RemoteDelay checked last remote check delay
 type RemoteDelay struct {
 	baseDelay
 }
