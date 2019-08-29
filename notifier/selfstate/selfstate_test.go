@@ -279,12 +279,12 @@ func TestRunGoRoutine(t *testing.T) {
 
 	Convey("Go routine run before first send, should send after 10 seconds next time", t, func() {
 		err := errors.New("DataBase doesn't work")
-		database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil).Times(2)
-		database.EXPECT().GetChecksUpdatesCount().Return(int64(1), err).Times(4)
-		database.EXPECT().GetNotifierState().Return(moira.SelfStateERROR, err).Times(2)
-		notif.EXPECT().Send(gomock.Any(), gomock.Any()).Times(2)
+		database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil).Times(3)
+		database.EXPECT().GetChecksUpdatesCount().Return(int64(1), err).Times(6)
+		database.EXPECT().GetNotifierState().Return(moira.SelfStateERROR, err).Times(3)
+		notif.EXPECT().Send(gomock.Any(), gomock.Any()).Times(3)
 		selfStateWorker.Start()
-		time.Sleep(time.Second*5 + time.Millisecond*500)
+		time.Sleep(time.Second*11 + time.Millisecond*500)
 		selfStateWorker.Stop()
 	})
 }
