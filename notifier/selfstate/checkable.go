@@ -18,6 +18,7 @@ type baseDelay struct {
 
 	delay       int64
 	last, count *int64
+	c           int
 }
 
 // Handling: Handler for structures based on a basic structure
@@ -43,12 +44,14 @@ func (check RedisDelay) Check(nowTS int64, events *[]moira.NotificationEvent) st
 	return ""
 }
 
+// Check metric received delay
 type MetricDelay struct {
 	baseDelay
 }
 
-// Check metric received delay
 func (check MetricDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
+	check.c++
+	print("GetMetricsUpdatesCount:", check.c)
 	mc, err := check.db.GetMetricsUpdatesCount()
 	if err == nil {
 		if *check.count != mc {
@@ -64,11 +67,11 @@ func (check MetricDelay) Check(nowTS int64, events *[]moira.NotificationEvent) s
 	return ""
 }
 
+// Check last check delay
 type CheckDelay struct {
 	baseDelay
 }
 
-// Check last check delay
 func (check CheckDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
 	cc, err := check.db.GetChecksUpdatesCount()
 	if err == nil {
@@ -85,11 +88,11 @@ func (check CheckDelay) Check(nowTS int64, events *[]moira.NotificationEvent) st
 	return ""
 }
 
+// Check last remote check delay
 type RemoteDelay struct {
 	baseDelay
 }
 
-// Check last remote check delay
 func (check RemoteDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
 	rcc, err := check.db.GetRemoteChecksUpdatesCount()
 	if err == nil {

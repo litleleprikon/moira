@@ -238,7 +238,7 @@ func TestMoiraCheckerDoesNotChecksRemoteTriggers(t *testing.T) {
 	mock.mockCtrl.Finish()
 }
 
-/*func TestRunGoRoutine(t *testing.T) {
+func TestRunGoRoutine(t *testing.T) {
 	adminContact := map[string]string{
 		"type":  "admin-mail",
 		"value": "admin@company.com",
@@ -287,7 +287,7 @@ func TestMoiraCheckerDoesNotChecksRemoteTriggers(t *testing.T) {
 		time.Sleep(time.Second*11 + time.Millisecond*500)
 		selfStateWorker.Stop()
 	})
-}*/
+}
 
 func configureWorker(t *testing.T, remoteEnabled bool) *selfCheckWorkerMock {
 	adminContact := map[string]string{
