@@ -18,7 +18,6 @@ type baseDelay struct {
 
 	delay       int64
 	last, count *int64
-	c           int
 }
 
 // Handling: Handler for structures based on a basic structure
@@ -27,31 +26,31 @@ func (check baseDelay) Handling(tml, err string, interval int64, events *[]moira
 	appendNotificationEvents(events, err, interval)
 }
 
+// RedisDelay structure to check redis disconnect delay
 type RedisDelay struct {
 	baseDelay
 }
 
-// Check redis disconnect delay
+// Check func to check redis disconnect delay
 func (check RedisDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
 	_, err := check.db.GetChecksUpdatesCount()
 	if err == nil {
 		*check.last = nowTS
 	}
 
-	if *check.last < nowTS-check.baseDelay.delay {
+	if *check.last < nowTS-check.delay {
 		check.Handling(templateMoreThan, redisDisconnectedErrorMessage, nowTS-*check.last, events)
 	}
 	return ""
 }
 
-// MetricDelay checked metric received delay
+// MetricDelay structure to check metric received delay
 type MetricDelay struct {
 	baseDelay
 }
 
+// Check func to check metric received delay
 func (check MetricDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
-	check.c++
-	print("GetMetricsUpdatesCount:", check.c)
 	mc, err := check.db.GetMetricsUpdatesCount()
 	if err == nil {
 		if *check.count != mc {
@@ -60,18 +59,19 @@ func (check MetricDelay) Check(nowTS int64, events *[]moira.NotificationEvent) s
 		}
 	}
 
-	if *check.last < nowTS-check.delay && err == nil {
-		check.Handling(templateMoreThan, filterStateErrorMessage, nowTS-*check.last, events)
+	if *check.last < nowTS-check.baseDelay.delay && err == nil {
+		check.Handling(templateMoreThan, filterStateErrorMessage, nowTS-*check.baseDelay.last, events)
 		return moira.SelfStateERROR
 	}
 	return ""
 }
 
-// CheckDelay checked last check delay
+// CheckDelay structure to check last check delay
 type CheckDelay struct {
 	baseDelay
 }
 
+// Check func to check last check delay
 func (check CheckDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
 	cc, err := check.db.GetChecksUpdatesCount()
 	if err == nil {
@@ -88,11 +88,12 @@ func (check CheckDelay) Check(nowTS int64, events *[]moira.NotificationEvent) st
 	return ""
 }
 
-// RemoteDelay checked last remote check delay
+// RemoteDelay func to check last remote check delay
 type RemoteDelay struct {
 	baseDelay
 }
 
+// Check func to check last remote check delay
 func (check RemoteDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
 	rcc, err := check.db.GetRemoteChecksUpdatesCount()
 	if err == nil {

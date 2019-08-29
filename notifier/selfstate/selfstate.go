@@ -179,13 +179,13 @@ func createCheckables(selfCheck *SelfCheckWorker, lastMetricReceivedTS, redisLas
 
 	if selfCheck.Config.RedisDisconnectDelaySeconds > 0 && redisLastCheckTS != nil {
 		check := &RedisDelay{base}
-		check.last, check.baseDelay.delay = redisLastCheckTS, selfCheck.Config.RedisDisconnectDelaySeconds
+		check.last, check.delay = redisLastCheckTS, selfCheck.Config.RedisDisconnectDelaySeconds
 		selfCheck.Checkables = append(selfCheck.Checkables, check)
 	}
 
 	if selfCheck.Config.LastMetricReceivedDelaySeconds > 0 && lastMetricReceivedTS != nil && metricsCount != nil {
 		check := &MetricDelay{base}
-		check.last, check.count, check.delay = lastMetricReceivedTS, metricsCount, selfCheck.Config.LastMetricReceivedDelaySeconds
+		check.baseDelay.last, check.baseDelay.count, check.baseDelay.delay = lastMetricReceivedTS, metricsCount, selfCheck.Config.LastMetricReceivedDelaySeconds
 		selfCheck.Checkables = append(selfCheck.Checkables, check)
 	}
 
