@@ -238,56 +238,56 @@ func TestMoiraCheckerDoesNotChecksRemoteTriggers(t *testing.T) {
 	mock.mockCtrl.Finish()
 }
 
-//func TestRunGoRoutine(t *testing.T) {
-//	adminContact := map[string]string{
-//		"type":  "admin-mail",
-//		"value": "admin@company.com",
-//	}
-//
-//	defaultCheckInterval = time.Second * 1
-//	conf := Config{
-//		Enabled: true,
-//		Contacts: []map[string]string{
-//			adminContact,
-//		},
-//		RedisDisconnectDelaySeconds:    1,
-//		LastMetricReceivedDelaySeconds: 10,
-//		LastCheckDelaySeconds:          60,
-//		NoticeIntervalSeconds:          3,
-//	}
-//
-//	mockCtrl := gomock.NewController(t)
-//	defer mockCtrl.Finish()
-//	database := mock_moira_alert.NewMockDatabase(mockCtrl)
-//	logger, _ := logging.GetLogger("SelfState")
-//	notif := mock_notifier.NewMockNotifier(mockCtrl)
-//	senders := map[string]bool{
-//		"admin-mail": true,
-//	}
-//	notif.EXPECT().GetSenders().Return(senders).MinTimes(1)
-//	lock := mock_moira_alert.NewMockLock(mockCtrl)
-//	lock.EXPECT().Acquire(gomock.Any()).Return(nil, nil)
-//	lock.EXPECT().Release()
-//	database.EXPECT().NewLock(gomock.Any(), gomock.Any()).Return(lock)
-//
-//	selfStateWorker := &SelfCheckWorker{
-//		Logger:   logger,
-//		DB:       database,
-//		Config:   conf,
-//		Notifier: notif,
-//	}
-//
-//	Convey("Go routine run before first send, should send after 10 seconds next time", t, func() {
-//		err := errors.New("DataBase doesn't work")
-//		database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil).Times(11)
-//		database.EXPECT().GetChecksUpdatesCount().Return(int64(1), err).Times(11)
-//		database.EXPECT().GetNotifierState().Return(moira.SelfStateERROR, err).Times(3)
-//		notif.EXPECT().Send(gomock.Any(), gomock.Any()).Times(3)
-//		selfStateWorker.Start()
-//		time.Sleep(time.Second*11 + time.Millisecond*500)
-//		selfStateWorker.Stop()
-//	})
-//}
+/*func TestRunGoRoutine(t *testing.T) {
+	adminContact := map[string]string{
+		"type":  "admin-mail",
+		"value": "admin@company.com",
+	}
+
+	defaultCheckInterval = time.Second * 1
+	conf := Config{
+		Enabled: true,
+		Contacts: []map[string]string{
+			adminContact,
+		},
+		RedisDisconnectDelaySeconds:    1,
+		LastMetricReceivedDelaySeconds: 10,
+		LastCheckDelaySeconds:          60,
+		NoticeIntervalSeconds:          3,
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	database := mock_moira_alert.NewMockDatabase(mockCtrl)
+	logger, _ := logging.GetLogger("SelfState")
+	notif := mock_notifier.NewMockNotifier(mockCtrl)
+	senders := map[string]bool{
+		"admin-mail": true,
+	}
+	notif.EXPECT().GetSenders().Return(senders).MinTimes(1)
+	lock := mock_moira_alert.NewMockLock(mockCtrl)
+	lock.EXPECT().Acquire(gomock.Any()).Return(nil, nil)
+	lock.EXPECT().Release()
+	database.EXPECT().NewLock(gomock.Any(), gomock.Any()).Return(lock)
+
+	selfStateWorker := &SelfCheckWorker{
+		Logger:   logger,
+		DB:       database,
+		Config:   conf,
+		Notifier: notif,
+	}
+
+	Convey("Go routine run before first send, should send after 10 seconds next time", t, func() {
+		err := errors.New("DataBase doesn't work")
+		database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil).Times(11)
+		database.EXPECT().GetChecksUpdatesCount().Return(int64(1), err).Times(11)
+		database.EXPECT().GetNotifierState().Return(moira.SelfStateERROR, err).Times(3)
+		notif.EXPECT().Send(gomock.Any(), gomock.Any()).Times(3)
+		selfStateWorker.Start()
+		time.Sleep(time.Second*11 + time.Millisecond*500)
+		selfStateWorker.Stop()
+	})
+}*/
 
 func configureWorker(t *testing.T, remoteEnabled bool) *selfCheckWorkerMock {
 	adminContact := map[string]string{

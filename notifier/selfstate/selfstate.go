@@ -175,16 +175,16 @@ func createCheckables(selfCheck *SelfCheckWorker, lastMetricReceivedTS, redisLas
 	}
 
 	selfCheck.Checkables = []Checkable{}
-	base := baseCheck{log: selfCheck.Logger, db: selfCheck.DB}
+	base := baseDelay{log: selfCheck.Logger, db: selfCheck.DB}
 
 	if selfCheck.Config.RedisDisconnectDelaySeconds > 0 && redisLastCheckTS != nil {
-		check := &RedisDisconnect{base}
-		check.last, check.delay = redisLastCheckTS, selfCheck.Config.RedisDisconnectDelaySeconds
+		check := &RedisDelay{base}
+		check.last, check.baseDelay.delay = redisLastCheckTS, selfCheck.Config.RedisDisconnectDelaySeconds
 		selfCheck.Checkables = append(selfCheck.Checkables, check)
 	}
 
 	if selfCheck.Config.LastMetricReceivedDelaySeconds > 0 && lastMetricReceivedTS != nil && metricsCount != nil {
-		check := &MetricReceivedDelay{base}
+		check := &MetricDelay{base}
 		check.last, check.count, check.delay = lastMetricReceivedTS, metricsCount, selfCheck.Config.LastMetricReceivedDelaySeconds
 		selfCheck.Checkables = append(selfCheck.Checkables, check)
 	}
@@ -196,7 +196,7 @@ func createCheckables(selfCheck *SelfCheckWorker, lastMetricReceivedTS, redisLas
 	}
 
 	if selfCheck.Config.LastRemoteCheckDelaySeconds > 0 && lastRemoteCheckTS != nil && remoteChecksCount != nil {
-		check := &RemoteTriggersDelay{base}
+		check := &RemoteDelay{base}
 		check.last, check.count, check.delay = lastRemoteCheckTS, remoteChecksCount, selfCheck.Config.LastRemoteCheckDelaySeconds
 		selfCheck.Checkables = append(selfCheck.Checkables, check)
 	}
