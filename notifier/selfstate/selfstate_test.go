@@ -48,8 +48,7 @@ func TestDatabaseDisconnected(t *testing.T) {
 			var sendingWG sync.WaitGroup
 			err := errors.New("DataBase doesn't work")
 			mock.database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil)
-			mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), err)
-			mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), err)
+			mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), err).Times(2)
 			mock.database.EXPECT().GetNotifierState().Return(moira.SelfStateERROR, err)
 
 			now := time.Now()
@@ -98,8 +97,7 @@ func TestMoiraCacheDoesNotReceivedNewMetrics(t *testing.T) {
 		var events []moira.NotificationEvent
 		var sendingWG sync.WaitGroup
 		mock.database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil)
-		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil)
-		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil)
+		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil).Times(2)
 
 		now := time.Now()
 		redisLastCheckTS = now.Unix()
@@ -152,8 +150,7 @@ func TestMoiraCheckerDoesNotChecksTriggers(t *testing.T) {
 		var events []moira.NotificationEvent
 		var sendingWG sync.WaitGroup
 		mock.database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil)
-		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil)
-		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil)
+		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil).Times(2)
 
 		now := time.Now()
 		redisLastCheckTS = now.Unix()
@@ -206,8 +203,7 @@ func TestMoiraCheckerDoesNotChecksRemoteTriggers(t *testing.T) {
 		var events []moira.NotificationEvent
 		var sendingWG sync.WaitGroup
 		mock.database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil)
-		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil)
-		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil)
+		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil).Times(2)
 		mock.database.EXPECT().SetNotifierState("ERROR").Return(nil)
 		mock.database.EXPECT().GetRemoteChecksUpdatesCount().Return(int64(1), nil)
 
