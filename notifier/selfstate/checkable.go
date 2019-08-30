@@ -105,7 +105,6 @@ func (check RemoteDelay) Check(nowTS int64, events *[]moira.NotificationEvent) s
 
 	if *check.last < nowTS-check.delay && err == nil {
 		check.Handling(templateMoreThan, remoteCheckerStateErrorMessage, nowTS-*check.last, events)
-		return moira.SelfStateERROR
 	}
 	return ""
 }

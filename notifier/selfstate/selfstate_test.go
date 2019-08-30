@@ -39,6 +39,7 @@ func TestDatabaseDisconnected(t *testing.T) {
 		lastRemoteCheckTS    int64
 		nextSendErrorMessage int64
 	)
+
 	// _, selfStateWorker, database, notif, conf, mockCtrl := configureWorker(t)
 	mock := configureWorker(t, false)
 	mock.selfCheckWorker.Start()
@@ -54,6 +55,7 @@ func TestDatabaseDisconnected(t *testing.T) {
 			now := time.Now()
 			redisLastCheckTS = now.Add(-time.Second * 11).Unix()
 			lastCheckTS = now.Unix()
+			lastRemoteCheckTS = now.Unix()
 			nextSendErrorMessage = now.Add(-time.Second * 5).Unix()
 			lastMetricReceivedTS = now.Unix()
 			appendNotificationEvents(&events, redisDisconnectedErrorMessage, now.Unix()-redisLastCheckTS)
@@ -106,6 +108,7 @@ func TestMoiraCacheDoesNotReceivedNewMetrics(t *testing.T) {
 		nextSendErrorMessage = now.Add(-time.Second * 5).Unix()
 		lastMetricReceivedTS = now.Add(-time.Second * 61).Unix()
 		metricsCount = 1
+		mock.selfCheckWorker.receivedEarlier = true
 
 		callingNow := now.Add(time.Second * 2)
 		appendNotificationEvents(&events, filterStateErrorMessage, callingNow.Unix()-lastMetricReceivedTS)
@@ -159,6 +162,7 @@ func TestMoiraCheckerDoesNotChecksTriggers(t *testing.T) {
 		nextSendErrorMessage = now.Add(-time.Second * 5).Unix()
 		lastMetricReceivedTS = now.Unix()
 		checksCount = 1
+		mock.selfCheckWorker.receivedEarlier = true
 
 		callingNow := now.Add(time.Second * 2)
 		appendNotificationEvents(&events, checkerStateErrorMessage, callingNow.Unix()-lastCheckTS)
@@ -204,7 +208,6 @@ func TestMoiraCheckerDoesNotChecksRemoteTriggers(t *testing.T) {
 		var sendingWG sync.WaitGroup
 		mock.database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil)
 		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil).Times(2)
-		mock.database.EXPECT().SetNotifierState(gomock.Any()).Return(nil)
 		mock.database.EXPECT().GetRemoteChecksUpdatesCount().Return(int64(1), nil)
 
 		now := time.Now()
@@ -246,9 +249,9 @@ func TestRunGoRoutine(t *testing.T) {
 		Contacts: []map[string]string{
 			adminContact,
 		},
-		RedisDisconnectDelaySeconds:    1,
-		LastMetricReceivedDelaySeconds: 10,
-		LastCheckDelaySeconds:          60,
+		RedisDisconnectDelaySeconds:    5,
+		LastMetricReceivedDelaySeconds: 60,
+		LastCheckDelaySeconds:          120,
 		NoticeIntervalSeconds:          3,
 	}
 
