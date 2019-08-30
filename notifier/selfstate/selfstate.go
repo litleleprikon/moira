@@ -27,13 +27,13 @@ const selfStateLockTTL = time.Second * 15
 
 // SelfCheckWorker checks what all notifier services works correctly and send message when moira don't work
 type SelfCheckWorker struct {
-	Logger          moira.Logger
-	DB              moira.Database
-	Notifier        notifier.Notifier
-	Config          Config
-	tomb            tomb.Tomb
-	Checkables      []Checkable
-	receivedEarlier bool
+	Logger                moira.Logger
+	DB                    moira.Database
+	Notifier              notifier.Notifier
+	Config                Config
+	tomb                  tomb.Tomb
+	Checkables            []Checkable
+	eventsReceivedEarlier bool
 }
 
 func (selfCheck *SelfCheckWorker) selfStateChecker(stop <-chan struct{}) error {
@@ -106,7 +106,7 @@ func (selfCheck *SelfCheckWorker) check(nowTS int64, nextSendErrorMessage *int64
 
 	if *nextSendErrorMessage < nowTS {
 		for _, check := range selfCheck.Checkables {
-			if state := check.Check(nowTS, &events); state != "" && selfCheck.receivedEarlier {
+			if state := check.Check(nowTS, &events); state != "" && selfCheck.eventsReceivedEarlier {
 				selfCheck.setNotifierState(state)
 			}
 		}
@@ -117,7 +117,7 @@ func (selfCheck *SelfCheckWorker) check(nowTS int64, nextSendErrorMessage *int64
 		}
 
 		if len(events) > 0 {
-			selfCheck.receivedEarlier = true
+			selfCheck.eventsReceivedEarlier = true
 			eventsJSON, _ := json.Marshal(events)
 			selfCheck.Logger.Errorf("Health check. Send package of %v notification events: %s", len(events), eventsJSON)
 			selfCheck.sendErrorMessages(&events)

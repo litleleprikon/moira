@@ -108,7 +108,7 @@ func TestMoiraCacheDoesNotReceivedNewMetrics(t *testing.T) {
 		nextSendErrorMessage = now.Add(-time.Second * 5).Unix()
 		lastMetricReceivedTS = now.Add(-time.Second * 61).Unix()
 		metricsCount = 1
-		mock.selfCheckWorker.receivedEarlier = true
+		mock.selfCheckWorker.eventsReceivedEarlier = true
 
 		callingNow := now.Add(time.Second * 2)
 		appendNotificationEvents(&events, filterStateErrorMessage, callingNow.Unix()-lastMetricReceivedTS)
@@ -162,7 +162,7 @@ func TestMoiraCheckerDoesNotChecksTriggers(t *testing.T) {
 		nextSendErrorMessage = now.Add(-time.Second * 5).Unix()
 		lastMetricReceivedTS = now.Unix()
 		checksCount = 1
-		mock.selfCheckWorker.receivedEarlier = true
+		mock.selfCheckWorker.eventsReceivedEarlier = true
 
 		callingNow := now.Add(time.Second * 2)
 		appendNotificationEvents(&events, checkerStateErrorMessage, callingNow.Unix()-lastCheckTS)
