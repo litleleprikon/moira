@@ -50,6 +50,7 @@ func TestDatabaseDisconnected(t *testing.T) {
 			err := errors.New("DataBase doesn't work")
 			mock.database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil)
 			mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), err).Times(2)
+			mock.database.EXPECT().GetLocalTriggersToCheckCount().Return(int64(1), nil).Times(2)
 			mock.database.EXPECT().GetNotifierState().Return(moira.SelfStateERROR, err)
 
 			now := time.Now()
@@ -99,6 +100,7 @@ func TestMoiraCacheDoesNotReceivedNewMetrics(t *testing.T) {
 		var events []moira.NotificationEvent
 		var sendingWG sync.WaitGroup
 		mock.database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil)
+		mock.database.EXPECT().GetLocalTriggersToCheckCount().Return(int64(1), nil).Times(2)
 		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil).Times(2)
 
 		now := time.Now()
@@ -108,7 +110,7 @@ func TestMoiraCacheDoesNotReceivedNewMetrics(t *testing.T) {
 		nextSendErrorMessage = now.Add(-time.Second * 5).Unix()
 		lastMetricReceivedTS = now.Add(-time.Second * 61).Unix()
 		metricsCount = 1
-		mock.selfCheckWorker.eventsReceivedEarlier = true
+		mock.selfCheckWorker.servicesNoErr = true
 
 		callingNow := now.Add(time.Second * 2)
 		appendNotificationEvents(&events, filterStateErrorMessage, callingNow.Unix()-lastMetricReceivedTS)
@@ -153,6 +155,7 @@ func TestMoiraCheckerDoesNotChecksTriggers(t *testing.T) {
 		var events []moira.NotificationEvent
 		var sendingWG sync.WaitGroup
 		mock.database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil)
+		mock.database.EXPECT().GetLocalTriggersToCheckCount().Return(int64(1), nil).Times(2)
 		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil).Times(2)
 
 		now := time.Now()
@@ -162,14 +165,14 @@ func TestMoiraCheckerDoesNotChecksTriggers(t *testing.T) {
 		nextSendErrorMessage = now.Add(-time.Second * 5).Unix()
 		lastMetricReceivedTS = now.Unix()
 		checksCount = 1
-		mock.selfCheckWorker.eventsReceivedEarlier = true
+		//mock.selfCheckWorker.servicesNoErr = true
 
 		callingNow := now.Add(time.Second * 2)
 		appendNotificationEvents(&events, checkerStateErrorMessage, callingNow.Unix()-lastCheckTS)
 		appendNotificationEvents(&events, notifierStateErrorMessage(moira.SelfStateERROR), 0)
 		expectedPackage := configureNotificationPackage(adminContact, &events)
 
-		mock.database.EXPECT().SetNotifierState(moira.SelfStateERROR).Return(nil)
+		//mock.database.EXPECT().SetNotifierState(moira.SelfStateERROR).Return(nil)
 		mock.database.EXPECT().GetNotifierState().Return(moira.SelfStateERROR, nil)
 		mock.notif.EXPECT().Send(&expectedPackage, &sendingWG)
 		createCheckables(mock.selfCheckWorker, &lastMetricReceivedTS, &redisLastCheckTS, &lastCheckTS, &lastRemoteCheckTS, &metricsCount, &checksCount, &remoteChecksCount)
@@ -209,6 +212,8 @@ func TestMoiraCheckerDoesNotChecksRemoteTriggers(t *testing.T) {
 		mock.database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil)
 		mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(1), nil).Times(2)
 		mock.database.EXPECT().GetRemoteChecksUpdatesCount().Return(int64(1), nil)
+		mock.database.EXPECT().GetLocalTriggersToCheckCount().Return(int64(1), nil).Times(2)
+		mock.database.EXPECT().GetRemoteTriggersToCheckCount().Return(int64(1), nil)
 
 		now := time.Now()
 		redisLastCheckTS = now.Unix()
@@ -275,12 +280,14 @@ func TestRunGoRoutine(t *testing.T) {
 		Config:   conf,
 		Notifier: notif,
 	}
+	selfStateWorker.servicesNoErr = false
 
 	Convey("Go routine run before first send, should send after 10 seconds next time", t, func() {
 		err := errors.New("DataBase doesn't work")
 		database.EXPECT().GetMetricsUpdatesCount().Return(int64(1), nil).Times(3)
 		database.EXPECT().GetChecksUpdatesCount().Return(int64(1), err).Times(6)
 		database.EXPECT().GetNotifierState().Return(moira.SelfStateERROR, err).Times(3)
+		database.EXPECT().GetLocalTriggersToCheckCount().Return(int64(1), nil).Times(6)
 		notif.EXPECT().Send(gomock.Any(), gomock.Any()).Times(3)
 		selfStateWorker.Start()
 		time.Sleep(time.Second*11 + time.Millisecond*500)

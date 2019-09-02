@@ -1,6 +1,9 @@
 package selfstate
 
-import "github.com/moira-alert/moira"
+import (
+	"errors"
+	"github.com/moira-alert/moira"
+)
 
 const (
 	templateMoreThan = "%s more than %ds. Send message."
@@ -8,7 +11,7 @@ const (
 
 // Checkable is the interface for simplified events verification.
 type Checkable interface {
-	Check(int64, *[]moira.NotificationEvent) string
+	Check(int64, *[]moira.NotificationEvent) error
 }
 
 // baseDelay basic structure for Checkable structures
@@ -32,7 +35,7 @@ type RedisDelay struct {
 }
 
 // Check func to check redis disconnect delay
-func (check RedisDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
+func (check RedisDelay) Check(nowTS int64, events *[]moira.NotificationEvent) error {
 	_, err := check.db.GetChecksUpdatesCount()
 	if err == nil {
 		*check.last = nowTS
@@ -40,8 +43,9 @@ func (check RedisDelay) Check(nowTS int64, events *[]moira.NotificationEvent) st
 
 	if *check.last < nowTS-check.delay {
 		check.Handling(templateMoreThan, redisDisconnectedErrorMessage, nowTS-*check.last, events)
+		return errors.New(moira.SelfStateERROR)
 	}
-	return ""
+	return nil
 }
 
 // MetricDelay structure to check metric received delay
@@ -50,7 +54,11 @@ type MetricDelay struct {
 }
 
 // Check func to check metric received delay
-func (check MetricDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
+func (check MetricDelay) Check(nowTS int64, events *[]moira.NotificationEvent) error {
+	ct, _ := check.db.GetLocalTriggersToCheckCount()
+	if ct == 0 {
+		return nil
+	}
 	mc, err := check.db.GetMetricsUpdatesCount()
 	if err == nil {
 		if *check.count != mc {
@@ -61,9 +69,9 @@ func (check MetricDelay) Check(nowTS int64, events *[]moira.NotificationEvent) s
 
 	if *check.last < nowTS-check.baseDelay.delay && err == nil {
 		check.Handling(templateMoreThan, filterStateErrorMessage, nowTS-*check.baseDelay.last, events)
-		return moira.SelfStateERROR
+		return errors.New(moira.SelfStateERROR)
 	}
-	return ""
+	return nil
 }
 
 // CheckDelay structure to check last check delay
@@ -72,7 +80,11 @@ type CheckDelay struct {
 }
 
 // Check func to check last check delay
-func (check CheckDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
+func (check CheckDelay) Check(nowTS int64, events *[]moira.NotificationEvent) error {
+	ct, _ := check.db.GetLocalTriggersToCheckCount()
+	if ct == 0 {
+		return nil
+	}
 	cc, err := check.db.GetChecksUpdatesCount()
 	if err == nil {
 		if *check.count != cc {
@@ -83,9 +95,8 @@ func (check CheckDelay) Check(nowTS int64, events *[]moira.NotificationEvent) st
 
 	if *check.last < nowTS-check.delay && err == nil {
 		check.Handling(templateMoreThan, checkerStateErrorMessage, nowTS-*check.last, events)
-		return moira.SelfStateERROR
 	}
-	return ""
+	return nil
 }
 
 // RemoteDelay func to check last remote check delay
@@ -94,7 +105,11 @@ type RemoteDelay struct {
 }
 
 // Check func to check last remote check delay
-func (check RemoteDelay) Check(nowTS int64, events *[]moira.NotificationEvent) string {
+func (check RemoteDelay) Check(nowTS int64, events *[]moira.NotificationEvent) error {
+	ct, _ := check.db.GetRemoteTriggersToCheckCount()
+	if ct == 0 {
+		return nil
+	}
 	rcc, err := check.db.GetRemoteChecksUpdatesCount()
 	if err == nil {
 		if *check.count != rcc {
@@ -106,5 +121,5 @@ func (check RemoteDelay) Check(nowTS int64, events *[]moira.NotificationEvent) s
 	if *check.last < nowTS-check.delay && err == nil {
 		check.Handling(templateMoreThan, remoteCheckerStateErrorMessage, nowTS-*check.last, events)
 	}
-	return ""
+	return nil
 }
