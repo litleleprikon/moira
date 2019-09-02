@@ -77,6 +77,55 @@ func TestDatabaseDisconnected(t *testing.T) {
 	mock.mockCtrl.Finish()
 }
 
+func TestTriggerAvailability(t *testing.T) {
+	var (
+		metricsCount         int64
+		checksCount          int64
+		remoteChecksCount    int64
+		lastMetricReceivedTS int64
+		redisLastCheckTS     int64
+		lastCheckTS          int64
+		lastRemoteCheckTS    int64
+		nextSendErrorMessage int64
+	)
+
+	now := time.Now()
+	redisLastCheckTS = now.Add(-time.Second * 11).Unix()
+	lastCheckTS = now.Unix()
+	lastRemoteCheckTS = now.Unix()
+	nextSendErrorMessage = now.Add(-time.Second * 5).Unix()
+	lastMetricReceivedTS = now.Unix()
+	lastMetricReceivedTS = now.Unix()
+
+	mock := configureWorker(t, true)
+	mock.selfCheckWorker.Start()
+	Convey("Trigger Availability", t, func() {
+		Convey("Local and remote trigger is not available", func() {
+			createCheckables(mock.selfCheckWorker, &lastMetricReceivedTS, &redisLastCheckTS, &lastCheckTS, &lastRemoteCheckTS, &metricsCount, &checksCount, &remoteChecksCount)
+			mock.database.EXPECT().GetLocalTriggersToCheckCount().Return(int64(0), nil).Times(2)
+			mock.database.EXPECT().GetRemoteTriggersToCheckCount().Return(int64(0), nil)
+			mock.database.EXPECT().GetChecksUpdatesCount().Return(int64(0), nil)
+			mock.database.EXPECT().GetNotifierState().Return(moira.SelfStateOK, nil)
+
+			mock.selfCheckWorker.check(now.Unix(), &nextSendErrorMessage)
+			So(lastRemoteCheckTS, ShouldEqual, now.Unix())
+			So(lastMetricReceivedTS, ShouldEqual, now.Unix())
+			So(lastCheckTS, ShouldEqual, now.Unix())
+		})
+		Convey("Test remote checks updates count", func() {
+			createCheckables(mock.selfCheckWorker, nil, nil, nil, &lastRemoteCheckTS, &metricsCount, &checksCount, &remoteChecksCount)
+			mock.database.EXPECT().GetRemoteTriggersToCheckCount().Return(int64(1), nil)
+			mock.database.EXPECT().GetRemoteChecksUpdatesCount().Return(int64(1), nil)
+			mock.database.EXPECT().GetNotifierState().Return(moira.SelfStateOK, nil)
+			mock.selfCheckWorker.check(now.Unix(), &nextSendErrorMessage)
+			So(lastRemoteCheckTS, ShouldEqual, now.Unix())
+		})
+	})
+
+	mock.selfCheckWorker.Stop()
+	mock.mockCtrl.Finish()
+}
+
 func TestMoiraCacheDoesNotReceivedNewMetrics(t *testing.T) {
 	adminContact := map[string]string{
 		"type":  "admin-mail",
@@ -309,12 +358,11 @@ func configureWorker(t *testing.T, remoteEnabled bool) *selfCheckWorkerMock {
 		RedisDisconnectDelaySeconds:    10,
 		LastMetricReceivedDelaySeconds: 60,
 		LastCheckDelaySeconds:          120,
-		LastRemoteCheckDelaySeconds:    120,
 		NoticeIntervalSeconds:          60,
 	}
 
-	if !remoteEnabled {
-		conf.LastRemoteCheckDelaySeconds = 0
+	if remoteEnabled {
+		conf.LastRemoteCheckDelaySeconds = 120
 	}
 
 	mockCtrl := gomock.NewController(t)
