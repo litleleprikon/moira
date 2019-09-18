@@ -798,23 +798,14 @@ func TestHandleTrigger(t *testing.T) {
 		fetchResult.EXPECT().GetPatternMetrics().Return([]string{metric}, nil)
 		dataBase.EXPECT().RemoveMetricsValues([]string{metric}, triggerChecker.until-triggerChecker.config.MetricsTTLSeconds)
 		dataBase.EXPECT().PushNotificationEvent(&moira.NotificationEvent{
-<<<<<<< HEAD
-			TriggerID: triggerChecker.triggerID,
-			Timestamp: lastCheck.Timestamp,
-			State:     moira.StateNODATA,
-			OldState:  moira.StateOK,
-			Metric:    metric,
-			Value:     nil,
-			Message:   nil}, true).Return(nil)
-=======
 			TriggerID:    triggerChecker.triggerID,
-			Timestamp:    lastCheck.Timestamp - triggerChecker.ttl,
+			Timestamp:    lastCheck.Timestamp,
 			State:        moira.StateNODATA,
 			OldState:     moira.StateOK,
 			Metric:       metric,
 			Value:        nil,
+			Message:      nil,
 			EventMessage: moira.EventInfo{Info: &moira.MaintenanceInfo{}}}, true).Return(nil)
->>>>>>> #356 update tests and added new for function CreateMessage
 		checkData, err := triggerChecker.checkTrigger()
 		So(err, ShouldBeNil)
 		So(checkData, ShouldResemble, moira.CheckData{
