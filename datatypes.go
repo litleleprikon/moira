@@ -29,69 +29,61 @@ const (
 
 // NotificationEvent represents trigger state changes event
 type NotificationEvent struct {
-	IsTriggerEvent bool      `json:"trigger_event,omitempty"`
-	Timestamp      int64     `json:"timestamp"`
-	Metric         string    `json:"metric"`
-	Value          *float64  `json:"value,omitempty"`
-	State          State     `json:"state"`
-	TriggerID      string    `json:"trigger_id"`
-	SubscriptionID *string   `json:"sub_id,omitempty"`
-	ContactID      string    `json:"contactId,omitempty"`
-	OldState       State     `json:"old_state"`
-	Message        *string   `json:"msg,omitempty"`
-	EventMessage   EventInfo `json:"event_message"`
+	IsTriggerEvent   bool      `json:"trigger_event,omitempty"`
+	Timestamp        int64     `json:"timestamp"`
+	Metric           string    `json:"metric"`
+	Value            *float64  `json:"value,omitempty"`
+	State            State     `json:"state"`
+	TriggerID        string    `json:"trigger_id"`
+	SubscriptionID   *string   `json:"sub_id,omitempty"`
+	ContactID        string    `json:"contactId,omitempty"`
+	OldState         State     `json:"old_state"`
+	Message          *string   `json:"msg,omitempty"`
+	MessageEventInfo EventInfo `json:"message_event_info"`
 }
 
 // EventInfo - a base for creating messages.
 type EventInfo struct {
-	Info     *MaintenanceInfo `json:"info,omitempty"`
-	Interval *int64           `json:"interval,omitempty"`
+	Maintenance *MaintenanceInfo `json:"info,omitempty"`
+	Interval    *int64           `json:"interval,omitempty"`
 }
 
 // CreateMessage - creates a message based on EventInfo.
-func (event *NotificationEvent) CreateMessage(loc *time.Location) string {
+func (event *NotificationEvent) CreateMessage(location *time.Location) string {
 	// ToDo: DEPRECATED Message in NotificationEvent
 	if len(UseString(event.Message)) > 0 {
 		return *event.Message
 	}
 
-	if event.EventMessage.Interval != nil {
-		return fmt.Sprintf(remindMessage, *event.EventMessage.Interval)
+	if event.MessageEventInfo.Interval != nil {
+		return fmt.Sprintf(remindMessage, *event.MessageEventInfo.Interval)
 	}
 
-	if event.EventMessage.Info == nil {
+	if event.MessageEventInfo.Maintenance == nil {
 		return ""
 	}
-
-	// If there is no time zone then use UTC and use the format with time zone
-	tz := ""
-	if loc == nil {
-		loc = time.UTC
-		tz = "(MST)"
-	}
-
 	messageBuffer := bytes.NewBuffer([]byte(""))
 	messageBuffer.WriteString("This metric changed its state during maintenance interval.")
 
-	if event.EventMessage.Info.StartUser != nil || event.EventMessage.Info.StartTime != nil {
+	if event.MessageEventInfo.Maintenance.StartUser != nil || event.MessageEventInfo.Maintenance.StartTime != nil {
 		messageBuffer.WriteString(" Maintenance was set")
-		if event.EventMessage.Info.StartUser != nil {
+		if event.MessageEventInfo.Maintenance.StartUser != nil {
 			messageBuffer.WriteString(" by ")
-			messageBuffer.WriteString(*event.EventMessage.Info.StartUser)
+			messageBuffer.WriteString(*event.MessageEventInfo.Maintenance.StartUser)
 		}
-		if event.EventMessage.Info.StartTime != nil {
+		if event.MessageEventInfo.Maintenance.StartTime != nil {
 			messageBuffer.WriteString(" at ")
-			messageBuffer.WriteString(time.Unix(*event.EventMessage.Info.StartTime, 0).In(loc).Format(format + tz))
+			messageBuffer.WriteString(time.Unix(*event.MessageEventInfo.Maintenance.StartTime, 0).In(location).Format(format))
 		}
-		if event.EventMessage.Info.StopUser != nil || event.EventMessage.Info.StopTime != nil {
+		if event.MessageEventInfo.Maintenance.StopUser != nil || event.MessageEventInfo.Maintenance.StopTime != nil {
 			messageBuffer.WriteString(" and removed")
-			if event.EventMessage.Info.StopUser != nil && *event.EventMessage.Info.StopUser != *event.EventMessage.Info.StartUser {
+			if event.MessageEventInfo.Maintenance.StopUser != nil && *event.MessageEventInfo.Maintenance.StopUser != *event.MessageEventInfo.Maintenance.StartUser {
 				messageBuffer.WriteString(" by ")
-				messageBuffer.WriteString(*event.EventMessage.Info.StopUser)
+				messageBuffer.WriteString(*event.MessageEventInfo.Maintenance.StopUser)
 			}
-			if event.EventMessage.Info.StopTime != nil {
+			if event.MessageEventInfo.Maintenance.StopTime != nil {
 				messageBuffer.WriteString(" at ")
-				messageBuffer.WriteString(time.Unix(*event.EventMessage.Info.StopTime, 0).In(loc).Format(format + tz))
+				messageBuffer.WriteString(time.Unix(*event.MessageEventInfo.Maintenance.StopTime, 0).In(location).Format(format))
 			}
 		}
 		messageBuffer.WriteString(".")

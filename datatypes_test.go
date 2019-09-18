@@ -149,31 +149,31 @@ func TestNotificationEvent_CreateMessage(t *testing.T) {
 		Convey("Test: creating remind message", func() {
 			message := "This metric has been in bad state for more than 24 hours - please, fix."
 			var interval int64 = 24
-			event := NotificationEvent{EventMessage: EventInfo{Interval: &interval}}
+			event := NotificationEvent{MessageEventInfo: EventInfo{Interval: &interval}}
 			So(event.CreateMessage(nil), ShouldEqual, message)
 		})
 		Convey("Test: check for void MaintenanceInfo", func() {
-			event := NotificationEvent{EventMessage: EventInfo{}}
+			event := NotificationEvent{MessageEventInfo: EventInfo{}}
 			So(event.CreateMessage(nil), ShouldEqual, "")
 		})
 		Convey("Test: check for void location", func() {
 			expected := "This metric changed its state during maintenance interval. Maintenance was set at 00:01 01.01.1970(UTC)."
-			event := NotificationEvent{EventMessage: EventInfo{
-				Info: &MaintenanceInfo{StartTime: &startTime},
+			event := NotificationEvent{MessageEventInfo: EventInfo{
+				Maintenance: &MaintenanceInfo{StartTime: &startTime},
 			}}
 			So(event.CreateMessage(nil), ShouldEqual, expected)
 		})
 		Convey("Test: was set by start user", func() {
 			expected := "This metric changed its state during maintenance interval. Maintenance was set by StartUser."
-			event := NotificationEvent{EventMessage: EventInfo{
-				Info: &MaintenanceInfo{StartUser: &startUser},
+			event := NotificationEvent{MessageEventInfo: EventInfo{
+				Maintenance: &MaintenanceInfo{StartUser: &startUser},
 			}}
 			So(event.CreateMessage(nil), ShouldEqual, expected)
 		})
 		Convey("Test: removed by stop user and time", func() {
 			expected := "This metric changed its state during maintenance interval. Maintenance was set by StartUser and removed by StopUser at 00:03 01.01.1970."
-			event := NotificationEvent{EventMessage: EventInfo{
-				Info: &MaintenanceInfo{StartUser: &startUser, StopUser: &stopUser, StopTime: &stopTime},
+			event := NotificationEvent{MessageEventInfo: EventInfo{
+				Maintenance: &MaintenanceInfo{StartUser: &startUser, StopUser: &stopUser, StopTime: &stopTime},
 			}}
 			So(event.CreateMessage(time.UTC), ShouldEqual, expected)
 		})

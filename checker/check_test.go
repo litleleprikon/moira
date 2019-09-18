@@ -539,9 +539,9 @@ func TestCheckErrors(t *testing.T) {
 				State:          moira.StateEXCEPTION,
 				OldState:       moira.StateOK,
 				Timestamp:      67,
-				EventMessage: moira.EventInfo{
-					Info:     &moira.MaintenanceInfo{},
-					Interval: nil,
+				MessageEventInfo: moira.EventInfo{
+					Maintenance: &moira.MaintenanceInfo{},
+					Interval:    nil,
 				},
 				Metric: triggerChecker.trigger.Name,
 			}
@@ -586,8 +586,8 @@ func TestCheckErrors(t *testing.T) {
 				OldState:       moira.StateEXCEPTION,
 				Timestamp:      67,
 				Metric:         triggerChecker.trigger.Name,
-				EventMessage: moira.EventInfo{
-					Info: &moira.MaintenanceInfo{},
+				MessageEventInfo: moira.EventInfo{
+					Maintenance: &moira.MaintenanceInfo{},
 				},
 			}
 
@@ -728,13 +728,13 @@ func TestHandleTrigger(t *testing.T) {
 		var val1 float64 = 4
 		dataBase.EXPECT().RemoveMetricsValues([]string{metric}, triggerChecker.until-triggerChecker.config.MetricsTTLSeconds)
 		dataBase.EXPECT().PushNotificationEvent(&moira.NotificationEvent{
-			TriggerID:    triggerChecker.triggerID,
-			Timestamp:    3617,
-			State:        moira.StateOK,
-			OldState:     moira.StateNODATA,
-			Metric:       metric,
-			Value:        &val,
-			EventMessage: moira.EventInfo{Info: &moira.MaintenanceInfo{}, Interval: nil}}, true).Return(nil)
+			TriggerID:        triggerChecker.triggerID,
+			Timestamp:        3617,
+			State:            moira.StateOK,
+			OldState:         moira.StateNODATA,
+			Metric:           metric,
+			Value:            &val,
+			MessageEventInfo: moira.EventInfo{Maintenance: &moira.MaintenanceInfo{}, Interval: nil}}, true).Return(nil)
 		checkData, err := triggerChecker.checkTrigger()
 		So(err, ShouldBeNil)
 		So(checkData, ShouldResemble, moira.CheckData{
@@ -798,14 +798,14 @@ func TestHandleTrigger(t *testing.T) {
 		fetchResult.EXPECT().GetPatternMetrics().Return([]string{metric}, nil)
 		dataBase.EXPECT().RemoveMetricsValues([]string{metric}, triggerChecker.until-triggerChecker.config.MetricsTTLSeconds)
 		dataBase.EXPECT().PushNotificationEvent(&moira.NotificationEvent{
-			TriggerID:    triggerChecker.triggerID,
-			Timestamp:    lastCheck.Timestamp,
-			State:        moira.StateNODATA,
-			OldState:     moira.StateOK,
-			Metric:       metric,
-			Value:        nil,
-			Message:      nil,
-			EventMessage: moira.EventInfo{Info: &moira.MaintenanceInfo{}}}, true).Return(nil)
+			TriggerID:        triggerChecker.triggerID,
+			Timestamp:        lastCheck.Timestamp,
+			State:            moira.StateNODATA,
+			OldState:         moira.StateOK,
+			Metric:           metric,
+			Value:            nil,
+			Message:          nil,
+			MessageEventInfo: moira.EventInfo{Maintenance: &moira.MaintenanceInfo{}}}, true).Return(nil)
 		checkData, err := triggerChecker.checkTrigger()
 		So(err, ShouldBeNil)
 		So(checkData, ShouldResemble, moira.CheckData{
@@ -992,9 +992,9 @@ func TestHandleTriggerCheck(t *testing.T) {
 				TriggerID:      triggerChecker.triggerID,
 				OldState:       moira.StateNODATA,
 				State:          moira.StateNODATA,
-				EventMessage: moira.EventInfo{
-					Info:     &moira.MaintenanceInfo{},
-					Interval: &interval,
+				MessageEventInfo: moira.EventInfo{
+					Maintenance: &moira.MaintenanceInfo{},
+					Interval:    &interval,
 				},
 			}
 
