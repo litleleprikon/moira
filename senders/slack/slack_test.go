@@ -130,7 +130,11 @@ some other text italic text
 
 		Convey("Print moira message with one event and message", func() {
 			var interval int64 = 24
+<<<<<<< HEAD
 			event.MessageEventInfo = moira.EventInfo{Interval: &interval}
+=======
+			event.EventMessage = moira.EventInfo{Interval: &interval}
+>>>>>>> 3bf13dd76910586b0bf3a56130bd81d318cd8a75
 			actual := sender.buildMessage([]moira.NotificationEvent{event}, trigger, false)
 			expected := "*NODATA* <http://moira.url/trigger/TriggerID|Name> [tag1][tag2]\n" + slackCompatibleMD +
 				"\n\n```\n02:40: Metric = 123 (OK to NODATA). This metric has been in bad state for more than 24 hours - please, fix.```"

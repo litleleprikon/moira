@@ -97,7 +97,11 @@ func TestBuildMoiraMessage(t *testing.T) {
 		})
 
 		Convey("Print moira message with one event and message", func() {
+<<<<<<< HEAD
 			event.MessageEventInfo = moira.EventInfo{Interval: &interval}
+=======
+			event.EventMessage = moira.EventInfo{Interval: &interval}
+>>>>>>> 3bf13dd76910586b0bf3a56130bd81d318cd8a75
 			actual := sender.buildMessage([]moira.NotificationEvent{event}, false)
 			expected := "02:40: Metric = 123 (OK to NODATA). This metric has been in bad state for more than 24 hours - please, fix.\n"
 			So(actual, ShouldResemble, expected)

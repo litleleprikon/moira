@@ -61,7 +61,11 @@ http://moira.url/trigger/TriggerID
 			event.TriggerID = ""
 			trigger.ID = ""
 			var interval int64 = 24
+<<<<<<< HEAD
 			event.MessageEventInfo = moira.EventInfo{Interval: &interval}
+=======
+			event.EventMessage = moira.EventInfo{Interval: &interval}
+>>>>>>> 3bf13dd76910586b0bf3a56130bd81d318cd8a75
 			actual := sender.buildMessage([]moira.NotificationEvent{event}, trigger, false, messageMaxCharacters)
 			expected := `💣NODATA Trigger Name [tag1][tag2] (1)
 

@@ -32,7 +32,11 @@ func (triggerChecker *TriggerChecker) compareTriggerStates(currentCheck moira.Ch
 	currentCheck.SuppressedState = lastStateSuppressedValue
 
 	maintenanceInfo, maintenanceTimestamp := getMaintenanceInfo(lastCheck, nil)
+<<<<<<< HEAD
 	needSend, interval := isStateChanged(currentStateValue, lastStateValue, currentCheckTimestamp, lastCheck.GetEventTimestamp(), lastStateSuppressed, lastStateSuppressedValue)
+=======
+	needSend, interval := isStateChanged(currentStateValue, lastStateValue, currentCheckTimestamp, lastCheck.GetEventTimestamp(), lastStateSuppressed, lastStateSuppressedValue, maintenanceInfo)
+>>>>>>> 3bf13dd76910586b0bf3a56130bd81d318cd8a75
 	if !needSend {
 		if maintenanceTimestamp < currentCheckTimestamp {
 			currentCheck.Suppressed = false
@@ -61,9 +65,15 @@ func (triggerChecker *TriggerChecker) compareTriggerStates(currentCheck moira.Ch
 		OldState:       getEventOldState(lastCheck.State, lastCheck.SuppressedState, lastCheck.Suppressed),
 		Timestamp:      currentCheckTimestamp,
 		Metric:         triggerChecker.trigger.Name,
+<<<<<<< HEAD
 		MessageEventInfo: moira.EventInfo{
 			Maintenance: &maintenanceInfo,
 			Interval:    interval,
+=======
+		EventMessage: moira.EventInfo{
+			Info:     &maintenanceInfo,
+			Interval: interval,
+>>>>>>> 3bf13dd76910586b0bf3a56130bd81d318cd8a75
 		},
 	}, true)
 	return currentCheck, err
@@ -85,7 +95,11 @@ func (triggerChecker *TriggerChecker) compareMetricStates(metric string, current
 	currentState.SuppressedState = lastState.SuppressedState
 
 	maintenanceInfo, maintenanceTimestamp := getMaintenanceInfo(triggerChecker.lastCheck, &currentState)
+<<<<<<< HEAD
 	needSend, interval := isStateChanged(currentState.State, lastState.State, currentState.Timestamp, lastState.GetEventTimestamp(), lastState.Suppressed, lastState.SuppressedState)
+=======
+	needSend, interval := isStateChanged(currentState.State, lastState.State, currentState.Timestamp, lastState.GetEventTimestamp(), lastState.Suppressed, lastState.SuppressedState, maintenanceInfo)
+>>>>>>> 3bf13dd76910586b0bf3a56130bd81d318cd8a75
 	if !needSend {
 		if maintenanceTimestamp < currentState.Timestamp {
 			currentState.Suppressed = false
@@ -114,9 +128,15 @@ func (triggerChecker *TriggerChecker) compareMetricStates(metric string, current
 		OldState:  getEventOldState(lastState.State, lastState.SuppressedState, lastState.Suppressed),
 		Timestamp: currentState.Timestamp,
 		Metric:    metric,
+<<<<<<< HEAD
 		MessageEventInfo: moira.EventInfo{
 			Maintenance: &maintenanceInfo,
 			Interval:    interval,
+=======
+		EventMessage: moira.EventInfo{
+			Info:     &maintenanceInfo,
+			Interval: interval,
+>>>>>>> 3bf13dd76910586b0bf3a56130bd81d318cd8a75
 		},
 		Value: currentState.Value,
 	}, true)
@@ -134,7 +154,11 @@ func (triggerChecker *TriggerChecker) isTriggerSuppressed(timestamp int64, maint
 	return !triggerChecker.trigger.Schedule.IsScheduleAllows(timestamp) || maintenanceTimestamp >= timestamp
 }
 
+<<<<<<< HEAD
 func isStateChanged(currentStateValue moira.State, lastStateValue moira.State, currentStateTimestamp int64, lastStateEventTimestamp int64, isLastCheckSuppressed bool, lastStateSuppressedValue moira.State) (bool, *int64) {
+=======
+func isStateChanged(currentStateValue moira.State, lastStateValue moira.State, currentStateTimestamp int64, lastStateEventTimestamp int64, isLastCheckSuppressed bool, lastStateSuppressedValue moira.State, maintenanceInfo moira.MaintenanceInfo) (bool, *int64) {
+>>>>>>> 3bf13dd76910586b0bf3a56130bd81d318cd8a75
 	if !isLastCheckSuppressed && currentStateValue != lastStateValue {
 		return true, nil
 	}
