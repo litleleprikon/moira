@@ -33,9 +33,7 @@ func TestBuildMessage(t *testing.T) {
 		Convey("Print moira message with one event", func() {
 			actual := sender.buildMessage([]moira.NotificationEvent{event}, trigger, false, messageMaxCharacters)
 			expected := `💣NODATA Trigger Name [tag1][tag2] (1)
-
 02:40: Metric name = 97.4458331200185 (OK to NODATA)
-
 http://moira.url/trigger/TriggerID
 `
 			So(actual, ShouldResemble, expected)
@@ -44,7 +42,6 @@ http://moira.url/trigger/TriggerID
 		Convey("Print moira message with empty triggerID, but with trigger Name", func() {
 			actual := sender.buildMessage([]moira.NotificationEvent{event}, moira.TriggerData{Name: "Name"}, false, messageMaxCharacters)
 			expected := `💣NODATA Name  (1)
-
 02:40: Metric name = 97.4458331200185 (OK to NODATA)`
 			So(actual, ShouldResemble, expected)
 		})
@@ -52,7 +49,6 @@ http://moira.url/trigger/TriggerID
 		Convey("Print moira message with empty trigger", func() {
 			actual := sender.buildMessage([]moira.NotificationEvent{event}, moira.TriggerData{}, false, messageMaxCharacters)
 			expected := `💣NODATA   (1)
-
 02:40: Metric name = 97.4458331200185 (OK to NODATA)`
 			So(actual, ShouldResemble, expected)
 		})
@@ -61,26 +57,18 @@ http://moira.url/trigger/TriggerID
 			event.TriggerID = ""
 			trigger.ID = ""
 			var interval int64 = 24
-<<<<<<< HEAD
-			event.MessageEventInfo = moira.EventInfo{Interval: &interval}
-=======
-			event.EventMessage = moira.EventInfo{Interval: &interval}
->>>>>>> 3bf13dd76910586b0bf3a56130bd81d318cd8a75
+			event.MessageEventInfo = &moira.EventInfo{Interval: &interval}
 			actual := sender.buildMessage([]moira.NotificationEvent{event}, trigger, false, messageMaxCharacters)
 			expected := `💣NODATA Trigger Name [tag1][tag2] (1)
-
-02:40: Metric name = 97.4458331200185 (OK to NODATA). This metric has been in bad state for more than 24 hours - please, fix.`
+02:40: Metric name = 97.4458331200185 (OK to NODATA). This is message`
 			So(actual, ShouldResemble, expected)
 		})
 
 		Convey("Print moira message with one event and throttled", func() {
 			actual := sender.buildMessage([]moira.NotificationEvent{event}, trigger, true, messageMaxCharacters)
 			expected := `💣NODATA Trigger Name [tag1][tag2] (1)
-
 02:40: Metric name = 97.4458331200185 (OK to NODATA)
-
 http://moira.url/trigger/TriggerID
-
 Please, fix your system or tune this trigger to generate less events.`
 			So(actual, ShouldResemble, expected)
 		})
@@ -92,7 +80,6 @@ Please, fix your system or tune this trigger to generate less events.`
 			}
 			actual := sender.buildMessage(events, trigger, false, photoCaptionMaxCharacters)
 			expected := `💣NODATA Trigger Name [tag1][tag2] (18)
-
 02:40: Metric name = 97.4458331200185 (OK to NODATA)
 02:40: Metric name = 97.4458331200185 (OK to NODATA)
 02:40: Metric name = 97.4458331200185 (OK to NODATA)
@@ -104,9 +91,7 @@ Please, fix your system or tune this trigger to generate less events.`
 02:40: Metric name = 97.4458331200185 (OK to NODATA)
 02:40: Metric name = 97.4458331200185 (OK to NODATA)
 02:40: Metric name = 97.4458331200185 (OK to NODATA)
-
 ...and 7 more events.
-
 http://moira.url/trigger/TriggerID
 `
 			fmt.Println(fmt.Sprintf("Bytes: %v", len(expected)))
