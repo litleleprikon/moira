@@ -63,7 +63,12 @@ func (event *NotificationEvent) CreateMessage(loc *time.Location) string {
 		return fmt.Sprintf(remindMessage, *event.MessageEventInfo.Interval)
 	}
 
+	if event.MessageEventInfo.Maintenance == nil {
+		return ""
+	}
+
 	messageBuffer := bytes.NewBuffer([]byte(""))
+	messageBuffer.WriteString("This metric changed its state during maintenance interval.")
 
 	if loc == nil {
 		loc = time.UTC

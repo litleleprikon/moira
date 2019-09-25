@@ -729,7 +729,7 @@ func TestHandleTrigger(t *testing.T) {
 			OldState:         moira.StateNODATA,
 			Metric:           metric,
 			Value:            &val,
-			MessageEventInfo: nil}, true).Return(nil)
+			MessageEventInfo: &moira.EventInfo{}}, true).Return(nil)
 		checkData, err := triggerChecker.checkTrigger()
 		So(err, ShouldBeNil)
 		So(checkData, ShouldResemble, moira.CheckData{
@@ -988,7 +988,7 @@ func TestHandleTriggerCheck(t *testing.T) {
 				TriggerID:        triggerChecker.triggerID,
 				OldState:         moira.StateNODATA,
 				State:            moira.StateNODATA,
-				MessageEventInfo: &moira.EventInfo{Interval: &interval},
+				MessageEventInfo: &moira.EventInfo{Interval: &interval, Maintenance: &moira.MaintenanceInfo{}},
 			}
 
 			dataBase.EXPECT().PushNotificationEvent(event, true).Return(nil)

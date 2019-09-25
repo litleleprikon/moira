@@ -127,7 +127,7 @@ func TestCompareMetricStates(t *testing.T) {
 					OldState:         moira.StateERROR,
 					Metric:           "m1",
 					Value:            currentState.Value,
-					MessageEventInfo: &moira.EventInfo{Interval: &interval},
+					MessageEventInfo: &moira.EventInfo{Interval: &interval, Maintenance: &moira.MaintenanceInfo{}},
 				}, true).Return(nil)
 				actual, err := triggerChecker.compareMetricStates("m1", currentState, lastState)
 				So(err, ShouldBeNil)
@@ -414,12 +414,13 @@ func TestCheckMetricStateSuppressedState(t *testing.T) {
 				}
 
 				dataBase.EXPECT().PushNotificationEvent(&moira.NotificationEvent{
-					TriggerID: triggerChecker.triggerID,
-					Timestamp: thirdState.Timestamp,
-					State:     thirdState.State,
-					OldState:  secondState.State,
-					Metric:    "super.awesome.metric",
-					Value:     thirdState.Value,
+					TriggerID:        triggerChecker.triggerID,
+					Timestamp:        thirdState.Timestamp,
+					State:            thirdState.State,
+					OldState:         secondState.State,
+					Metric:           "super.awesome.metric",
+					Value:            thirdState.Value,
+					MessageEventInfo: &moira.EventInfo{Maintenance: &moira.MaintenanceInfo{}},
 				}, true).Return(nil)
 				actual, err = triggerChecker.compareMetricStates("super.awesome.metric", thirdState, secondState)
 				So(err, ShouldBeNil)
@@ -452,7 +453,6 @@ func TestCheckMetricStateSuppressedState(t *testing.T) {
 			}
 
 			Convey("No maintenance info", func() {
-				//message := fmt.Sprintf("This metric changed its state during maintenance interval.")
 				dataBase.EXPECT().PushNotificationEvent(&moira.NotificationEvent{
 					TriggerID:        triggerChecker.triggerID,
 					Timestamp:        currentState.Timestamp,

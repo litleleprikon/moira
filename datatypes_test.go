@@ -46,8 +46,8 @@ func TestIsScheduleAllows(t *testing.T) {
 	}
 
 	// Date Format: dd/mm/yyyy 24h:MM
-	// 367980 - 05/01/1970 18:13 (UTC) Mon - 23:13 (YEKT)
-	// 454380 - 06/01/1970 18:13 (UTC) Tue - 23:13 (YEKT)
+	// 367980 - 05/01/1970 18:13  Mon - 23:13 (YEKT)
+	// 454380 - 06/01/1970 18:13  Tue - 23:13 (YEKT)
 
 	Convey("No schedule", t, func() {
 		var noSchedule *ScheduleData
@@ -157,7 +157,7 @@ func TestNotificationEvent_CreateMessage(t *testing.T) {
 			So(event.CreateMessage(nil), ShouldEqual, "")
 		})
 		Convey("Test: check for void location", func() {
-			expected := "This metric changed its state during maintenance interval. Maintenance was set at 00:01 01.01.1970(UTC)."
+			expected := "This metric changed its state during maintenance interval. Maintenance was set at 00:01 01.01.1970."
 			event := NotificationEvent{MessageEventInfo: &EventInfo{
 				Maintenance: &MaintenanceInfo{StartTime: &startTime},
 			}}
