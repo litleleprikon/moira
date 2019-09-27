@@ -1,6 +1,7 @@
 package checker
 
 import (
+	"fmt"
 	"github.com/moira-alert/moira"
 )
 
@@ -32,13 +33,15 @@ func (triggerChecker *TriggerChecker) compareTriggerStates(currentCheck moira.Ch
 	currentCheck.SuppressedState = lastStateSuppressedValue
 
 	maintenanceInfo, maintenanceTimestamp := getMaintenanceInfo(lastCheck, nil)
-	eventInfo := isStateChanged(currentStateValue, lastStateValue, currentCheckTimestamp, lastCheck.GetEventTimestamp(), lastStateSuppressed, lastStateSuppressedValue, &maintenanceInfo)
-	if eventInfo == nil {
+	eventInfo := isStateChanged(currentStateValue, lastStateValue, currentCheckTimestamp, lastCheck.GetEventTimestamp(), lastStateSuppressed, lastStateSuppressedValue, maintenanceInfo)
+	if eventInfo == nil { //!needSend
 		if maintenanceTimestamp < currentCheckTimestamp {
 			currentCheck.Suppressed = false
 			currentCheck.SuppressedState = ""
 		}
 		return currentCheck, nil
+	} else if eventInfo.Interval == nil && eventInfo.Maintenance == nil {
+		eventInfo = nil
 	}
 
 	currentCheck.EventTimestamp = currentCheckTimestamp
@@ -54,6 +57,8 @@ func (triggerChecker *TriggerChecker) compareTriggerStates(currentCheck moira.Ch
 	currentCheck.Suppressed = false
 	currentCheck.SuppressedState = ""
 
+	println("---------------------------------------------------------------")
+	println("eventInfo is nil:", eventInfo == nil, fmt.Sprintf("%#v", eventInfo))
 	err := triggerChecker.database.PushNotificationEvent(&moira.NotificationEvent{
 		IsTriggerEvent:   true,
 		TriggerID:        triggerChecker.triggerID,
@@ -82,13 +87,15 @@ func (triggerChecker *TriggerChecker) compareMetricStates(metric string, current
 	currentState.SuppressedState = lastState.SuppressedState
 
 	maintenanceInfo, maintenanceTimestamp := getMaintenanceInfo(triggerChecker.lastCheck, &currentState)
-	eventInfo := isStateChanged(currentState.State, lastState.State, currentState.Timestamp, lastState.GetEventTimestamp(), lastState.Suppressed, lastState.SuppressedState, &maintenanceInfo)
-	if eventInfo != nil {
+	eventInfo := isStateChanged(currentState.State, lastState.State, currentState.Timestamp, lastState.GetEventTimestamp(), lastState.Suppressed, lastState.SuppressedState, maintenanceInfo)
+	if eventInfo == nil { //!needSend
 		if maintenanceTimestamp < currentState.Timestamp {
 			currentState.Suppressed = false
 			currentState.SuppressedState = ""
 		}
 		return currentState, nil
+	} else if eventInfo.Interval == nil && eventInfo.Maintenance == nil {
+		eventInfo = nil
 	}
 
 	// State was changed. Set event timestamp. Event will be not sent if it is suppressed
@@ -105,6 +112,8 @@ func (triggerChecker *TriggerChecker) compareMetricStates(metric string, current
 	currentState.Suppressed = false
 	currentState.SuppressedState = ""
 
+	println("---------------------------------------------------------------")
+	println("eventInfo is nil:", eventInfo == nil, fmt.Sprintf("%#v", eventInfo))
 	err := triggerChecker.database.PushNotificationEvent(&moira.NotificationEvent{
 		TriggerID:        triggerChecker.triggerID,
 		State:            currentState.State,
@@ -128,13 +137,13 @@ func (triggerChecker *TriggerChecker) isTriggerSuppressed(timestamp int64, maint
 	return !triggerChecker.trigger.Schedule.IsScheduleAllows(timestamp) || maintenanceTimestamp >= timestamp
 }
 
-func isStateChanged(currentStateValue moira.State, lastStateValue moira.State, currentStateTimestamp int64, lastStateEventTimestamp int64, isLastCheckSuppressed bool, lastStateSuppressedValue moira.State, maintenanceInfo *moira.MaintenanceInfo) *moira.EventInfo {
+func isStateChanged(currentStateValue moira.State, lastStateValue moira.State, currentStateTimestamp int64, lastStateEventTimestamp int64, isLastCheckSuppressed bool, lastStateSuppressedValue moira.State, maintenanceInfo moira.MaintenanceInfo) *moira.EventInfo {
 	if !isLastCheckSuppressed && currentStateValue != lastStateValue {
 		return &moira.EventInfo{}
 	}
 
 	if isLastCheckSuppressed && currentStateValue != lastStateSuppressedValue {
-		return &moira.EventInfo{Maintenance: maintenanceInfo}
+		return &moira.EventInfo{Maintenance: &maintenanceInfo}
 	}
 	remindInterval, ok := badStateReminder[currentStateValue]
 	if ok && needRemindAgain(currentStateTimestamp, lastStateEventTimestamp, remindInterval) {
