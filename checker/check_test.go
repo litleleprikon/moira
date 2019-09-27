@@ -976,7 +976,6 @@ func TestHandleTriggerCheck(t *testing.T) {
 					LastSuccessfulCheckTimestamp: 0,
 				},
 			}
-
 			checkData := moira.CheckData{
 				State:     moira.StateOK,
 				Timestamp: time.Now().Unix(),
@@ -988,7 +987,7 @@ func TestHandleTriggerCheck(t *testing.T) {
 				TriggerID:        triggerChecker.triggerID,
 				OldState:         moira.StateNODATA,
 				State:            moira.StateNODATA,
-				MessageEventInfo: &moira.EventInfo{Interval: &interval, Maintenance: &moira.MaintenanceInfo{}},
+				MessageEventInfo: &moira.EventInfo{Interval: &interval},
 			}
 
 			dataBase.EXPECT().PushNotificationEvent(event, true).Return(nil)
@@ -1059,7 +1058,6 @@ func TestHandleTriggerCheck(t *testing.T) {
 			LastSuccessfulCheckTimestamp: 0,
 		}
 
-		dataBase.EXPECT().PushNotificationEvent(gomock.Any(), true).Return(nil)
 		actual, err := triggerChecker.handleCheckResult(checkData, ErrTriggerHasOnlyWildcards{})
 		expected := moira.CheckData{
 			Metrics:                      checkData.Metrics,
@@ -1133,7 +1131,7 @@ func TestHandleTriggerCheck(t *testing.T) {
 			Metrics:        checkData.Metrics,
 			State:          moira.StateOK,
 			Timestamp:      now,
-			EventTimestamp: now - 3600,
+			EventTimestamp: now,
 			Message:        "Trigger never received metrics",
 		}
 		So(err, ShouldBeNil)
@@ -1191,8 +1189,6 @@ func TestHandleTriggerCheck(t *testing.T) {
 			Timestamp: time.Now().Unix(),
 		}
 
-		dataBase.EXPECT().PushNotificationEvent(gomock.Any(), true).Return(nil)
-
 		actual, err := triggerChecker.handleCheckResult(checkData, ErrTriggerHasSameMetricNames{names: []string{"first", "second"}})
 		expected := moira.CheckData{
 			State:                        moira.StateERROR,
@@ -1229,7 +1225,7 @@ func TestHandleTriggerCheck(t *testing.T) {
 			expected := moira.CheckData{
 				State:                        moira.StateOK,
 				Timestamp:                    now.Unix(),
-				EventTimestamp:               time.Now().Add(-1 * time.Hour).Unix(),
+				EventTimestamp:               time.Now().Unix(),
 				LastSuccessfulCheckTimestamp: now.Add(-1 * time.Minute).Unix(),
 			}
 			actual, err := triggerChecker.handleCheckResult(checkData, remote.ErrRemoteTriggerResponse{InternalError: fmt.Errorf("pain")})
@@ -1247,10 +1243,9 @@ func TestHandleTriggerCheck(t *testing.T) {
 				State:                        moira.StateEXCEPTION,
 				Message:                      fmt.Sprintf("Remote server unavailable. Trigger is not checked for %d seconds", checkData.Timestamp-checkData.LastSuccessfulCheckTimestamp),
 				Timestamp:                    now.Unix(),
-				EventTimestamp:               now.Unix(),
+				EventTimestamp:               now.Unix() - 3600,
 				LastSuccessfulCheckTimestamp: now.Add(-10 * time.Minute).Unix(),
 			}
-			dataBase.EXPECT().PushNotificationEvent(gomock.Any(), true).Return(nil)
 			actual, err := triggerChecker.handleCheckResult(checkData, remote.ErrRemoteTriggerResponse{InternalError: fmt.Errorf("pain")})
 			So(err, ShouldBeNil)
 			So(actual, ShouldResemble, expected)
@@ -1277,8 +1272,6 @@ func TestHandleTriggerCheck(t *testing.T) {
 			State:     moira.StateNODATA,
 			Timestamp: time.Now().Unix(),
 		}
-
-		dataBase.EXPECT().PushNotificationEvent(gomock.Any(), true).Return(nil)
 
 		actual, err := triggerChecker.handleCheckResult(checkData, ErrWrongTriggerTargets([]int{2}))
 		expected := moira.CheckData{
