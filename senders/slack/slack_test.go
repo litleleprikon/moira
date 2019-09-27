@@ -110,6 +110,7 @@ some other text _italic text_`,
 
 		slackCompatibleMD := `*header1*
 some text *bold text*
+
 *header 2*
 some other text italic text
 `
@@ -221,6 +222,7 @@ some other text _italic text_`,
 
 		slackCompatibleMD := `*header1*
 some text *bold text*
+
 *header 2*
 some other text italic text
 `
