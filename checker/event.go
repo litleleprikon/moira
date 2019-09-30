@@ -129,7 +129,6 @@ func (triggerChecker *TriggerChecker) isTriggerSuppressed(timestamp int64, maint
 }
 
 func isStateChanged(currentStateValue moira.State, lastStateValue moira.State, currentStateTimestamp int64, lastStateEventTimestamp int64, isLastCheckSuppressed bool, lastStateSuppressedValue moira.State, maintenanceInfo moira.MaintenanceInfo) (*moira.EventInfo, bool) {
-	println(currentStateTimestamp, lastStateEventTimestamp, lastStateValue)
 	if !isLastCheckSuppressed && currentStateValue != lastStateValue {
 		return nil, true
 	}
@@ -139,7 +138,6 @@ func isStateChanged(currentStateValue moira.State, lastStateValue moira.State, c
 	}
 
 	remindInterval, ok := badStateReminder[currentStateValue]
-	println("remindInterval", remindInterval, ok)
 	if ok && needRemindAgain(currentStateTimestamp, lastStateEventTimestamp, remindInterval) {
 		interval := remindInterval / 3600
 		return &moira.EventInfo{Interval: &interval}, true
